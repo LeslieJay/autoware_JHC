@@ -468,7 +468,6 @@ void VelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstSharedPtr 
     RCLCPP_ERROR(get_logger(), "VelocitySmootherNode: Data check failed");
     return;
   }
-  // RCLCPP_INFO_THROTTLE(get_logger(), *clock_, 5000, "VelocitySmootherNode: Data check passed");
 
   // calculate trajectory velocity
   auto input_points = autoware::motion_utils::convertToTrajectoryPointArray(*base_traj_raw_ptr_);

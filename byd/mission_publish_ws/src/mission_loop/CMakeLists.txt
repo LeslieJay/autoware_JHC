@@ -10,7 +10,7 @@ find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_auto REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(autoware_localization_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(rclcpp_components REQUIRED)
@@ -24,7 +24,7 @@ ament_target_dependencies(${PROJECT_NAME}
   SYSTEM
   rclcpp
   geometry_msgs
-  autoware_localization_msgs
+  nav_msgs
   tf2
   tf2_geometry_msgs
   rclcpp_components

@@ -1703,20 +1703,46 @@ void fillAvoidanceNecessity(
     registered_objects.begin(), registered_objects.end(),
     [&id](const auto & o) { return o.object.object_id == id; });
 
+  const std::string obj_id_short = to_hex_string(id).substr(0, 8);
+  const double overhang = object_data.overhang_points.empty()
+                            ? 0.0
+                            : object_data.overhang_points.front().first;
+
   // First time
   if (same_id_obj == registered_objects.end()) {
     object_data.avoid_required = check_necessity(1.0);
+    RCLCPP_WARN(
+      rclcpp::get_logger(logger_namespace),
+      "[fillAvoidanceNecessity] obj=%s FIRST_TIME avoid_required=%s "
+      "overhang=%.3f safety_margin=%.3f (vehicle_width/2=%.3f + lateral_hard_margin=%.3f * "
+      "distance_factor=%.3f)",
+      obj_id_short.c_str(), object_data.avoid_required ? "TRUE" : "FALSE",
+      overhang, safety_margin, vehicle_width * 0.5,
+      lateral_hard_margin, object_data.distance_factor);
     return;
   }
 
   // FALSE -> FALSE or FALSE -> TRUE
   if (!same_id_obj->avoid_required) {
     object_data.avoid_required = check_necessity(1.0);
+    RCLCPP_WARN(
+      rclcpp::get_logger(logger_namespace),
+      "[fillAvoidanceNecessity] obj=%s PREV=FALSE now avoid_required=%s "
+      "overhang=%.3f vs safety_margin=%.3f",
+      obj_id_short.c_str(), object_data.avoid_required ? "TRUE" : "FALSE",
+      overhang, safety_margin);
     return;
   }
 
   // TRUE -> ? (check with hysteresis factor)
   object_data.avoid_required = check_necessity(parameters->hysteresis_factor_expand_rate);
+  RCLCPP_WARN(
+    rclcpp::get_logger(logger_namespace),
+    "[fillAvoidanceNecessity] obj=%s PREV=TRUE now avoid_required=%s "
+    "overhang=%.3f vs safety_margin*hysteresis=%.3f (hysteresis=%.2f)",
+    obj_id_short.c_str(), object_data.avoid_required ? "TRUE" : "FALSE",
+    overhang, safety_margin * parameters->hysteresis_factor_expand_rate,
+    parameters->hysteresis_factor_expand_rate);
 }
 
 void fillObjectStoppableJudge(
@@ -1945,6 +1971,35 @@ void filterTargetObjects(
     return;
   }
 
+  // Helper: convert ObjectInfo to human-readable string
+  const auto obj_info_str = [](const ObjectInfo info) -> const char * {
+    switch (info) {
+      case ObjectInfo::OUT_OF_TARGET_AREA: return "OUT_OF_TARGET_AREA";
+      case ObjectInfo::FURTHER_THAN_THRESHOLD: return "FURTHER_THAN_THRESHOLD";
+      case ObjectInfo::FURTHER_THAN_GOAL: return "FURTHER_THAN_GOAL";
+      case ObjectInfo::IS_NOT_TARGET_OBJECT: return "IS_NOT_TARGET_OBJECT";
+      case ObjectInfo::IS_NOT_PARKING_OBJECT: return "IS_NOT_PARKING_OBJECT";
+      case ObjectInfo::TOO_NEAR_TO_CENTERLINE: return "TOO_NEAR_TO_CENTERLINE";
+      case ObjectInfo::TOO_NEAR_TO_GOAL: return "TOO_NEAR_TO_GOAL";
+      case ObjectInfo::MOVING_OBJECT: return "MOVING_OBJECT";
+      case ObjectInfo::UNSTABLE_OBJECT: return "UNSTABLE_OBJECT";
+      case ObjectInfo::CROSSWALK_USER: return "CROSSWALK_USER";
+      case ObjectInfo::ENOUGH_LATERAL_DISTANCE: return "ENOUGH_LATERAL_DISTANCE";
+      case ObjectInfo::LESS_THAN_EXECUTION_THRESHOLD: return "LESS_THAN_EXECUTION_THRESHOLD";
+      case ObjectInfo::PARALLEL_TO_EGO_LANE: return "PARALLEL_TO_EGO_LANE";
+      case ObjectInfo::MERGING_TO_EGO_LANE: return "MERGING_TO_EGO_LANE";
+      case ObjectInfo::DEVIATING_FROM_EGO_LANE: return "DEVIATING_FROM_EGO_LANE";
+      case ObjectInfo::NEED_DECELERATION: return "NEED_DECELERATION";
+      case ObjectInfo::SAME_DIRECTION_SHIFT: return "SAME_DIRECTION_SHIFT";
+      case ObjectInfo::LIMIT_DRIVABLE_SPACE_TEMPORARY: return "LIMIT_DRIVABLE_SPACE_TEMPORARY";
+      case ObjectInfo::INSUFFICIENT_DRIVABLE_SPACE: return "INSUFFICIENT_DRIVABLE_SPACE";
+      case ObjectInfo::INSUFFICIENT_LONGITUDINAL_DISTANCE: return "INSUFFICIENT_LONGITUDINAL_DISTANCE";
+      case ObjectInfo::INVALID_SHIFT_LINE: return "INVALID_SHIFT_LINE";
+      case ObjectInfo::AMBIGUOUS_STOPPED_VEHICLE: return "AMBIGUOUS_STOPPED_VEHICLE";
+      default: return "NONE/UNKNOWN";
+    }
+  };
+
   const rclcpp::Time now = rclcpp::Clock(RCL_ROS_TIME).now();
   const auto push_target_object = [&data, &now](auto & object) {
     object.last_seen = now;
@@ -1959,11 +2014,23 @@ void filterTargetObjects(
           data.reference_path_rough.points, ego_idx, data.reference_path_rough.points.size() - 1)
       : std::numeric_limits<double>::max();
 
+  RCLCPP_INFO(
+    rclcpp::get_logger(logger_namespace),
+    "[filterTargetObjects] START: total objects=%zu, forward_detection_range=%.1f, "
+    "to_goal_distance=%.1f",
+    objects.size(), forward_detection_range, to_goal_distance);
+
   for (auto & o : objects) {
+    const std::string obj_id = to_hex_string(o.object.object_id).substr(0, 8);
     if (!filtering_utils::isSatisfiedWithCommonCondition(
           o, data.reference_path_rough, forward_detection_range, to_goal_distance,
           planner_data->self_odometry->pose.pose.position, data.is_allowed_goal_modification,
           parameters)) {
+      RCLCPP_WARN(
+        rclcpp::get_logger(logger_namespace),
+        "[filterTargetObjects] FILTERED (common) obj=%s reason=%s "
+        "longitudinal=%.1f",
+        obj_id.c_str(), obj_info_str(o.info), o.longitudinal);
       data.other_objects.push_back(o);
       continue;
     }
@@ -1980,6 +2047,10 @@ void filterTargetObjects(
       constexpr double STOP_TIME_THRESHOLD = 3.0;  // [s]
       if (o.stop_time < STOP_TIME_THRESHOLD) {
         o.info = ObjectInfo::UNSTABLE_OBJECT;
+        RCLCPP_WARN(
+          rclcpp::get_logger(logger_namespace),
+          "[filterTargetObjects] FILTERED (unknown/unstable) obj=%s stop_time=%.1fs < %.1fs",
+          obj_id.c_str(), o.stop_time, STOP_TIME_THRESHOLD);
         data.other_objects.push_back(o);
         continue;
       }
@@ -1994,11 +2065,24 @@ void filterTargetObjects(
       o.avoid_margin = filtering_utils::getAvoidMargin(o, planner_data, parameters);
 
       if (filtering_utils::isNoNeedAvoidanceBehavior(o, parameters)) {
+        RCLCPP_WARN(
+          rclcpp::get_logger(logger_namespace),
+          "[filterTargetObjects] FILTERED (vehicle/no_need_avoidance) obj=%s reason=%s "
+          "is_parked=%s is_within_intersection=%s longitudinal=%.1f",
+          obj_id.c_str(), obj_info_str(o.info), o.is_parked ? "true" : "false",
+          o.is_within_intersection ? "true" : "false", o.longitudinal);
         data.other_objects.push_back(o);
         continue;
       }
 
       if (!filtering_utils::isSatisfiedWithVehicleCondition(o, data, planner_data, parameters)) {
+        RCLCPP_WARN(
+          rclcpp::get_logger(logger_namespace),
+          "[filterTargetObjects] FILTERED (vehicle/condition) obj=%s reason=%s "
+          "is_parked=%s is_on_ego_lane=%s is_within_intersection=%s longitudinal=%.1f",
+          obj_id.c_str(), obj_info_str(o.info), o.is_parked ? "true" : "false",
+          o.is_on_ego_lane ? "true" : "false",
+          o.is_within_intersection ? "true" : "false", o.longitudinal);
         data.other_objects.push_back(o);
         continue;
       }
@@ -2011,18 +2095,39 @@ void filterTargetObjects(
       o.avoid_margin = filtering_utils::getAvoidMargin(o, planner_data, parameters);
 
       if (filtering_utils::isNoNeedAvoidanceBehavior(o, parameters)) {
+        RCLCPP_WARN(
+          rclcpp::get_logger(logger_namespace),
+          "[filterTargetObjects] FILTERED (non-vehicle/no_need_avoidance) obj=%s reason=%s "
+          "longitudinal=%.1f",
+          obj_id.c_str(), obj_info_str(o.info), o.longitudinal);
         data.other_objects.push_back(o);
         continue;
       }
 
       if (!filtering_utils::isSatisfiedWithNonVehicleCondition(o, data, planner_data, parameters)) {
+        RCLCPP_WARN(
+          rclcpp::get_logger(logger_namespace),
+          "[filterTargetObjects] FILTERED (non-vehicle/condition) obj=%s reason=%s "
+          "longitudinal=%.1f",
+          obj_id.c_str(), obj_info_str(o.info), o.longitudinal);
         data.other_objects.push_back(o);
         continue;
       }
     }
 
+    RCLCPP_INFO(
+      rclcpp::get_logger(logger_namespace),
+      "[filterTargetObjects] ACCEPTED as target obj=%s longitudinal=%.1f "
+      "is_parked=%s is_on_ego_lane=%s avoid_margin=%.2f",
+      obj_id.c_str(), o.longitudinal, o.is_parked ? "true" : "false",
+      o.is_on_ego_lane ? "true" : "false", o.avoid_margin.has_value() ? o.avoid_margin.value() : -1.0);
     push_target_object(o);
   }
+
+  RCLCPP_INFO(
+    rclcpp::get_logger(logger_namespace),
+    "[filterTargetObjects] END: target_objects=%zu, other_objects=%zu (total=%zu)",
+    data.target_objects.size(), data.other_objects.size(), objects.size());
 }
 
 AvoidLine fillAdditionalInfo(const AvoidancePlanningData & data, const AvoidLine & line)

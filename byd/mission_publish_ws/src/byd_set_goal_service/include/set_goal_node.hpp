@@ -62,6 +62,7 @@ private:
   rclcpp::TimerBase::SharedPtr wait_timer_;
   uint8_t route_state_;
   bool goal_sent_;
+  bool pending_send_goal_;  // wait for UNSET state before sending next goal
 
   // ROS2 clients
   rclcpp::Client<autoware_adapi_v1_msgs::srv::SetRoutePoints>::SharedPtr client_;

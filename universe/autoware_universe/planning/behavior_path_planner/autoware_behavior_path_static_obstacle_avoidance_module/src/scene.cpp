@@ -100,28 +100,25 @@ StaticObstacleAvoidanceModule::StaticObstacleAvoidanceModule(
  */
 bool StaticObstacleAvoidanceModule::isExecutionRequested() const
 {
-  // RCLCPP_INFO_THROTTLE(
-  //   getLogger(), *clock_, 1000,
-  //   "[DEBUG] StaticObstacleAvoidanceModule isExecutionRequested");
-  // 更新信息和调试标记
+
   updateInfoMarker(avoid_data_);
   updateDebugMarker(BehaviorModuleOutput{}, avoid_data_, path_shifter_, debug_data_);
 
   // 如果有需要停车的目标障碍物，直接请求执行
   if (!!avoid_data_.stop_target_object) {
-    // RCLCPP_INFO_THROTTLE(
-    //   getLogger(), *clock_, 1000,
-    //   "[DEBUG] isExecutionRequested: TRUE - Found stop_target_object (ID: %s)",
-    //   to_hex_string(avoid_data_.stop_target_object->object.object_id).c_str());
+    RCLCPP_INFO_THROTTLE(
+      getLogger(), *clock_, 1000,
+      "[DEBUG] isExecutionRequested: TRUE - Found stop_target_object (ID: %s)",
+      to_hex_string(avoid_data_.stop_target_object->object.object_id).c_str());
     return true;
   }
 
   // 如果新的偏移线为空，不需要执行
   if (avoid_data_.new_shift_line.empty()) {
-    // RCLCPP_INFO_THROTTLE(
-    //   getLogger(), *clock_, 1000,
-    //   "[DEBUG] isExecutionRequested: FALSE - new_shift_line is empty (target_objects count: %zu)",
-    //   avoid_data_.target_objects.size());
+    RCLCPP_INFO_THROTTLE(
+      getLogger(), *clock_, 1000,
+      "[DEBUG] isExecutionRequested: FALSE - new_shift_line is empty (target_objects count: %zu)",
+      avoid_data_.target_objects.size());
     return false;
   }
 
@@ -130,12 +127,12 @@ bool StaticObstacleAvoidanceModule::isExecutionRequested() const
     avoid_data_.target_objects.begin(), avoid_data_.target_objects.end(),
     [this](const auto & o) { return !helper_->isAbsolutelyNotAvoidable(o); });
 
-  // RCLCPP_INFO_THROTTLE(
-  //   getLogger(), *clock_, 1000,
-  //   "[DEBUG] isExecutionRequested: %s - has_avoidable_object=%s, target_objects=%zu, "
-  //   "new_shift_line=%zu",
-  //   has_avoidable_object ? "TRUE" : "FALSE", has_avoidable_object ? "true" : "false",
-  //   avoid_data_.target_objects.size(), avoid_data_.new_shift_line.size());
+  RCLCPP_INFO_THROTTLE(
+    getLogger(), *clock_, 1000,
+    "[DEBUG] isExecutionRequested: %s - has_avoidable_object=%s, target_objects=%zu, "
+    "new_shift_line=%zu",
+    has_avoidable_object ? "TRUE" : "FALSE", has_avoidable_object ? "true" : "false",
+    avoid_data_.target_objects.size(), avoid_data_.new_shift_line.size());
 
   return has_avoidable_object;
 }
@@ -450,6 +447,22 @@ void StaticObstacleAvoidanceModule::fillAvoidanceTargetObjects(
 
     updateAvoidanceDebugData(debug_info_array);
   }
+
+  RCLCPP_INFO_THROTTLE(
+    getLogger(), *clock_, 1000,
+    "[fillAvoidanceTargetObjects] perception_objects=%zu → target_objects=%zu, "
+    "other_objects=%zu",
+    objects.size(), data.target_objects.size(), data.other_objects.size());
+  for (const auto & o : data.target_objects) {
+    RCLCPP_INFO_THROTTLE(
+      getLogger(), *clock_, 1000,
+      "  [TARGET] id=%s longitudinal=%.1f avoid_required=%s avoid_margin=%.2f "
+      "is_parked=%s is_on_ego_lane=%s",
+      to_hex_string(o.object.object_id).substr(0, 8).c_str(),
+      o.longitudinal, o.avoid_required ? "TRUE" : "FALSE",
+      o.avoid_margin.has_value() ? o.avoid_margin.value() : -1.0,
+      o.is_parked ? "true" : "false", o.is_on_ego_lane ? "true" : "false");
+  }
 }
 
 void StaticObstacleAvoidanceModule::fillAvoidanceTargetData(ObjectDataArray & objects) const
@@ -621,35 +634,35 @@ void StaticObstacleAvoidanceModule::fillShiftLine(
   // data.request_operator = avoidance_ready.second;
   data.ready = true;
   data.request_operator = false;
-  // RCLCPP_INFO_THROTTLE(
-  //   getLogger(), *clock_, 1000,
-  //   "[DEBUG] fillShiftLine: new_shift_line=%zu, valid=%s, comfortable=%s, safe=%s, ready=%s, "
-  //   "request_operator=%s, target_objects=%zu",
-  //   data.new_shift_line.size(), data.valid ? "true" : "false",
-  //   data.comfortable ? "true" : "false", data.safe ? "true" : "false",
-  //   data.ready ? "true" : "false", data.request_operator ? "true" : "false",
-  //   data.target_objects.size());
+  RCLCPP_INFO_THROTTLE(
+    getLogger(), *clock_, 1000,
+    "[fillShiftLine] new_shift_line=%zu, valid=%s, comfortable=%s, safe=%s, ready=%s, "
+    "request_operator=%s, target_objects=%zu",
+    data.new_shift_line.size(), data.valid ? "true" : "false",
+    data.comfortable ? "true" : "false", data.safe ? "true" : "false",
+    data.ready ? "true" : "false", data.request_operator ? "true" : "false",
+    data.target_objects.size());
 
-  // if (!data.safe) {
-  //   RCLCPP_WARN_THROTTLE(
-  //     getLogger(), *clock_, 2000,
-  //     "[DEBUG] fillShiftLine: Path is NOT SAFE - This may cause vehicle to stop instead of avoid");
-  // }
-  // if (!data.comfortable) {
-  //   RCLCPP_WARN_THROTTLE(
-  //     getLogger(), *clock_, 2000,
-  //     "[DEBUG] fillShiftLine: Path is NOT COMFORTABLE - Shift may be too aggressive");
-  // }
-  // if (!data.valid) {
-  //   RCLCPP_WARN_THROTTLE(
-  //     getLogger(), *clock_, 2000,
-  //     "[DEBUG] fillShiftLine: Path is NOT VALID - Shift line validation failed");
-  // }
-  // if (!data.ready) {
-  //   RCLCPP_WARN_THROTTLE(
-  //     getLogger(), *clock_, 2000,
-  //     "[DEBUG] fillShiftLine: Path is NOT READY - Not ready for avoidance execution");
-  // }
+  if (!data.safe) {
+    RCLCPP_WARN_THROTTLE(
+      getLogger(), *clock_, 2000,
+      "[fillShiftLine] Path is NOT SAFE - This may cause vehicle to stop instead of avoid");
+  }
+  if (!data.comfortable) {
+    RCLCPP_WARN_THROTTLE(
+      getLogger(), *clock_, 2000,
+      "[fillShiftLine] Path is NOT COMFORTABLE - Shift may be too aggressive");
+  }
+  if (!data.valid) {
+    RCLCPP_WARN_THROTTLE(
+      getLogger(), *clock_, 2000,
+      "[fillShiftLine] Path is NOT VALID - Shift line validation failed");
+  }
+  if (data.new_shift_line.empty()) {
+    RCLCPP_WARN_THROTTLE(
+      getLogger(), *clock_, 2000,
+      "[fillShiftLine] new_shift_line is EMPTY - No shift lines generated for target objects");
+  }
 }
 
 /**
@@ -689,14 +702,20 @@ void StaticObstacleAvoidanceModule::fillEgoStatus(
       data.avoid_required = true;
       data.stop_target_object = o;
       data.to_stop_line = o.to_stop_line;
-      // RCLCPP_INFO_THROTTLE(
-      //   getLogger(), *clock_, 5000,
-      //   "[DEBUG] fillEgoStatus: Found avoid_required object (ID: %s, to_stop_line: %.2f, "
-      //   "is_avoidable: %s, is_parked: %s)",
-      //   to_hex_string(o.object.object_id).c_str(), o.to_stop_line, o.is_avoidable ? "true" : "false",
-      //   o.is_parked ? "true" : "false");
+      RCLCPP_WARN_THROTTLE(
+        getLogger(), *clock_, 1000,
+        "[fillEgoStatus] Found avoid_required object id=%s to_stop_line=%.2f "
+        "is_avoidable=%s is_parked=%s longitudinal=%.1f",
+        to_hex_string(o.object.object_id).substr(0, 8).c_str(), o.to_stop_line,
+        o.is_avoidable ? "true" : "false", o.is_parked ? "true" : "false", o.longitudinal);
       break;
     }
+  }
+  if (!data.avoid_required) {
+    RCLCPP_INFO_THROTTLE(
+      getLogger(), *clock_, 2000,
+      "[fillEgoStatus] No avoid_required object in %zu target_objects - vehicle does NOT need to avoid",
+      data.target_objects.size());
   }
 
   const auto can_yield_maneuver = canYieldManeuver(data);
@@ -737,9 +756,11 @@ void StaticObstacleAvoidanceModule::fillEgoStatus(
   if (data.safe) {
     data.yield_required = false;
     data.safe_shift_line = data.new_shift_line;
-    // RCLCPP_INFO_THROTTLE(
-    //   getLogger(), *clock_, 1000,
-    //   "[DEBUG] fillEgoStatus: Path is SAFE - Will execute avoidance (yield_required=false)");
+    RCLCPP_INFO_THROTTLE(
+      getLogger(), *clock_, 1000,
+      "[fillEgoStatus] Path is SAFE - Will execute avoidance (yield_required=false, "
+      "new_shift_line=%zu)",
+      data.new_shift_line.size());
     return;
   }
 
@@ -750,10 +771,10 @@ void StaticObstacleAvoidanceModule::fillEgoStatus(
   if (!parameters_->enable_yield_maneuver) {
     data.yield_required = false;
     data.safe_shift_line = data.new_shift_line;
-    // RCLCPP_WARN_THROTTLE(
-    //   getLogger(), *clock_, 2000,
-    //   "[DEBUG] fillEgoStatus: Yield maneuver is DISABLED - Will attempt avoidance even if unsafe "
-    //   "(enable_yield_maneuver=false)");
+    RCLCPP_WARN_THROTTLE(
+      getLogger(), *clock_, 2000,
+      "[fillEgoStatus] Yield maneuver is DISABLED - Will attempt avoidance even if unsafe "
+      "(enable_yield_maneuver=false)");
     return;
   }
 
@@ -766,10 +787,10 @@ void StaticObstacleAvoidanceModule::fillEgoStatus(
     data.safe = true;  // overwrite safety judge.
     data.yield_required = false;
     data.safe_shift_line = data.new_shift_line;
-    // RCLCPP_WARN_THROTTLE(
-    //   getLogger(), *clock_, 500,
-    //   "[DEBUG] fillEgoStatus: Cannot transit to yield status - Path is unsafe but cannot yield. "
-    //   "Forcing safe=true (avoidance maneuver already initiated or insufficient prepare distance)");
+    RCLCPP_WARN_THROTTLE(
+      getLogger(), *clock_, 500,
+      "[fillEgoStatus] Cannot transit to yield - path unsafe but cannot yield. "
+      "Forcing safe=true (avoidance already initiated or insufficient prepare distance)");
     return;
   }
 
@@ -818,6 +839,14 @@ void StaticObstacleAvoidanceModule::fillEgoStatus(
   {
     data.yield_required = true;
     data.safe_shift_line = data.new_shift_line;
+    RCLCPP_WARN_THROTTLE(
+      getLogger(), *clock_, 1000,
+      "[fillEgoStatus] YIELD MANEUVER triggered - vehicle will STOP instead of avoid. "
+      "safe=%s avoid_required=%s found_avoidance_path=%s stop_target=%s new_shift_line=%zu",
+      data.safe ? "true" : "false", data.avoid_required ? "true" : "false",
+      data.found_avoidance_path ? "true" : "false",
+      data.stop_target_object.has_value() ? "exists" : "none",
+      data.new_shift_line.size());
   }
 
   /**

@@ -1,6 +1,6 @@
 #include <rclcpp/rclcpp.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
-#include <autoware_localization_msgs/msg/kinematic_state.hpp>
+#include <nav_msgs/msg/odometry.hpp>
 
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
@@ -47,7 +47,7 @@ public:
         "/planning/mission_planning/goal", qos);
     
 
-    state_sub_ = create_subscription<autoware_localization_msgs::msg::KinematicState>(
+    state_sub_ = create_subscription<nav_msgs::msg::Odometry>(
         "/localization/kinematic_state", 10,
         std::bind(&MissionLoopNode::stateCallback, this, std::placeholders::_1));
     
@@ -130,28 +130,45 @@ private:
   
   /* ---------------- ROS callbacks ---------------- */
 
-  void stateCallback(const autoware_localization_msgs::msg::KinematicState::SharedPtr msg)
+  void stateCallback(const nav_msgs::msg::Odometry::SharedPtr msg)
   {
-    current_pose_ = msg->pose_with_covariance.pose;
-    current_speed_ =
-      std::abs(msg->twist_with_covariance.twist.linear.x);
+    current_pose_ = msg->pose.pose;
+    current_speed_ = std::abs(msg->twist.twist.linear.x);
   }
   
 
   void timerCallback()
   {
     if (!current_pose_.has_value()) {
+      RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 3000,
+        "[timerCallback] current_pose_ not available yet, waiting...");
       return;
     }
 
+    const double dist = distanceToGoal();
+    const double spd  = current_speed_;
+
     if (state_ == State::DRIVING) {
+      RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 1000,
+        "[DRIVING] goal=%s  dist=%.3f m (thr=%.2f)  speed=%.4f m/s (thr=%.3f)  arrived=%s",
+        mission_points_[current_idx_].name.c_str(),
+        dist, arrive_distance_th_, spd, arrive_speed_th_,
+        (dist < arrive_distance_th_ && spd < arrive_speed_th_) ? "YES" : "NO");
+
       if (isArrived()) {
         if (!arrived_start_time_) {
           arrived_start_time_ = now();
+          RCLCPP_INFO(get_logger(),
+            "[DRIVING] Arrived condition first met at goal=%s, starting %.1fs timer",
+            mission_points_[current_idx_].name.c_str(), arrive_time_th_);
         }
 
         double elapsed =
           (now() - arrived_start_time_.value()).seconds();
+
+        RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 500,
+          "[DRIVING] Arrived hold timer: %.2f / %.1f s",
+          elapsed, arrive_time_th_);
 
         if (elapsed > arrive_time_th_) {
           RCLCPP_INFO(
@@ -162,6 +179,11 @@ private:
           state_ = State::WAIT;
         }
       } else {
+        if (arrived_start_time_) {
+          RCLCPP_WARN(get_logger(),
+            "[DRIVING] Arrived condition LOST for goal=%s  dist=%.3f  speed=%.4f — resetting timer",
+            mission_points_[current_idx_].name.c_str(), dist, spd);
+        }
         arrived_start_time_.reset();
       }
     }
@@ -170,8 +192,17 @@ private:
       double wait_elapsed =
         (now() - wait_start_time_).seconds();
 
+      RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 500,
+        "[WAIT] goal=%s  wait_elapsed=%.2f / %.1f s",
+        mission_points_[current_idx_].name.c_str(),
+        wait_elapsed, mission_points_[current_idx_].wait_time);
+
       if (wait_elapsed >
           mission_points_[current_idx_].wait_time) {
+        RCLCPP_INFO(get_logger(),
+          "[WAIT] Wait done. Advancing from %s → %s",
+          mission_points_[current_idx_].name.c_str(),
+          mission_points_[(current_idx_ + 1) % mission_points_.size()].name.c_str());
         current_idx_ = (current_idx_ + 1) % mission_points_.size();
         publishGoal();
       }
@@ -232,7 +263,7 @@ private:
   /* ---------------- ROS objects ---------------- */
 
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr goal_pub_;
-  rclcpp::Subscription<autoware_localization_msgs::msg::KinematicState>::SharedPtr state_sub_;
+  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr state_sub_;
   rclcpp::TimerBase::SharedPtr timer_;
 
 

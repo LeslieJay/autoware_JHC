@@ -12,7 +12,8 @@ SetGoalNode::SetGoalNode()
   current_goal_index_(0),
   is_waiting_(false),
   route_state_(ROUTE_STATE_UNKNOWN),
-  goal_sent_(false)
+  goal_sent_(false),
+  pending_send_goal_(false)
 {
   // Declare parameters
   this->declare_parameter<std::string>("frame_id", "map");
@@ -130,6 +131,13 @@ void SetGoalNode::route_state_callback(const autoware_adapi_v1_msgs::msg::RouteS
       curr_state_name.c_str());
   }
 
+  // If waiting for UNSET state to send next goal, trigger it now
+  if (route_state_ == ROUTE_STATE_UNSET && pending_send_goal_) {
+    pending_send_goal_ = false;
+    do_send_current_goal();
+    return;
+  }
+
   // Check if arrived at current goal
   if (route_state_ == ROUTE_STATE_ARRIVED && goal_sent_ && !is_waiting_) {
     on_goal_arrived();
@@ -224,15 +232,19 @@ void SetGoalNode::clear_route_response_for_send_callback(
   try {
     auto response = future.get();
     if (response->status.success) {
-      RCLCPP_INFO(this->get_logger(), "Route cleared successfully! Sending goal...");
+      RCLCPP_INFO(
+        this->get_logger(),
+        "Route cleared successfully! Waiting for UNSET state before sending goal...");
+      // Don't send immediately — wait for route state to become UNSET
+      pending_send_goal_ = true;
     } else {
       RCLCPP_WARN(
         this->get_logger(),
         "Failed to clear route: %s, but proceeding anyway",
         response->status.message.c_str());
+      // Fallback: send directly if clear failed
+      do_send_current_goal();
     }
-    // Always send goal, even if clear failed
-    do_send_current_goal();
   } catch (const std::exception & e) {
     RCLCPP_ERROR(
       this->get_logger(),
