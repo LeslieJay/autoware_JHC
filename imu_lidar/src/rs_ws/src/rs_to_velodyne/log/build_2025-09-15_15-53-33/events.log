@@ -1,0 +1,224 @@
+[0.000000] (-) TimerEvent: {}
+[0.000593] (rs_to_velodyne) JobQueued: {'identifier': 'rs_to_velodyne', 'dependencies': OrderedDict()}
+[0.001582] (rs_to_velodyne) JobStarted: {'identifier': 'rs_to_velodyne'}
+[0.014500] (rs_to_velodyne) JobProgress: {'identifier': 'rs_to_velodyne', 'progress': 'cmake'}
+[0.016143] (rs_to_velodyne) JobProgress: {'identifier': 'rs_to_velodyne', 'progress': 'build'}
+[0.017677] (rs_to_velodyne) Command: {'cmd': ['/usr/bin/cmake', '--build', '/home1/rs_ws/src/rs_to_velodyne/build/rs_to_velodyne', '--', '-j12', '-l12'], 'cwd': '/home1/rs_ws/src/rs_to_velodyne/build/rs_to_velodyne', 'env': OrderedDict([('LESSOPEN', '| /usr/bin/lesspipe %s'), ('HTTPS_PROXY', 'http://127.0.0.1:7897/'), ('no_proxy', 'localhost,127.0.0.1,192.168.0.0/16,10.0.0.0/8,172.16.0.0/12,172.29.0.0/16,::1'), ('LANGUAGE', 'zh_CN:zh:en_US:en'), ('USER', 'byd'), ('LC_TIME', 'zh_CN.UTF-8'), ('SPCONV_DISABLE_NVRTC', '1'), ('CCACHE_DIR', '/home/byd/.cache/ccache'), ('all_proxy', 'socks://127.0.0.1:7897/'), ('XDG_SESSION_TYPE', 'x11'), ('SHLVL', '1'), ('LD_LIBRARY_PATH', '/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/aarch64-linux-gnu:/opt/ros/humble/lib::/usr/local/cuda/lib64'), ('HOME', '/home/byd'), ('DESKTOP_SESSION', 'ubuntu'), ('NO_PROXY', 'localhost,127.0.0.1,192.168.0.0/16,10.0.0.0/8,172.16.0.0/12,172.29.0.0/16,::1'), ('JETSON_L4T', '36.4.3'), ('ROS_PYTHON_VERSION', '3'), ('GNOME_SHELL_SESSION_MODE', 'ubuntu'), ('GTK_MODULES', 'gail:atk-bridge'), ('JETSON_MODEL', 'NVIDIA Jetson AGX Orin Developer Kit'), ('LC_MONETARY', 'zh_CN.UTF-8'), ('DBUS_STARTER_BUS_TYPE', 'session'), ('SYSTEMD_EXEC_PID', '3009'), ('DBUS_SESSION_BUS_ADDRESS', 'unix:path=/run/user/1000/bus,guid=8381637caa2a69f430df8a170000029e'), ('COLORTERM', 'truecolor'), ('IM_CONFIG_PHASE', '1'), ('https_proxy', 'http://127.0.0.1:7897/'), ('ROS_DISTRO', 'humble'), ('GTK_IM_MODULE', 'ibus'), ('LOGNAME', 'byd'), ('ALL_PROXY', 'socks://127.0.0.1:7897/'), ('JETSON_MODULE', 'NVIDIA Jetson AGX Orin (64GB ram)'), ('JETSON_SERIAL_NUMBER', '1420125020084'), ('http_proxy', 'http://127.0.0.1:7897/'), ('_', '/usr/bin/colcon'), ('ROS_VERSION', '2'), ('XDG_SESSION_CLASS', 'user'), ('USERNAME', 'byd'), ('TERM', 'xterm-256color'), ('GNOME_DESKTOP_SESSION_ID', 'this-is-deprecated'), ('ROS_LOCALHOST_ONLY', '0'), ('WINDOWPATH', '2'), ('PATH', '/opt/ros/humble/bin:/home/byd/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin:/usr/local/cuda/bin'), ('SESSION_MANAGER', 'local/ubuntu:@/tmp/.ICE-unix/3009,unix/ubuntu:/tmp/.ICE-unix/3009'), ('PAPERSIZE', 'a4'), ('XDG_MENU_PREFIX', 'gnome-'), ('LC_ADDRESS', 'zh_CN.UTF-8'), ('GNOME_TERMINAL_SCREEN', '/org/gnome/Terminal/screen/391ff76f_ec4a_4b91_8c3a_f5312956fdc9'), ('XDG_RUNTIME_DIR', '/run/user/1000'), ('DISPLAY', ':1'), ('LANG', 'zh_CN.UTF-8'), ('XDG_CURRENT_DESKTOP', 'ubuntu:GNOME'), ('LC_TELEPHONE', 'zh_CN.UTF-8'), ('XMODIFIERS', '@im=ibus'), ('XDG_SESSION_DESKTOP', 'ubuntu'), ('XAUTHORITY', '/run/user/1000/gdm/Xauthority'), ('LS_COLORS', 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:'), ('JETSON_SOC', 'tegra234'), ('GNOME_TERMINAL_SERVICE', ':1.175'), ('SSH_AGENT_LAUNCHER', 'gnome-keyring'), ('ROSDISTRO_INDEX_URL', 'https://mirrors.tuna.tsinghua.edu.cn/rosdistro/index-v4.yaml'), ('SSH_AUTH_SOCK', '/run/user/1000/keyring/ssh'), ('AMENT_PREFIX_PATH', '/opt/ros/humble'), ('SHELL', '/bin/bash'), ('LC_NAME', 'zh_CN.UTF-8'), ('QT_ACCESSIBILITY', '1'), ('CXX', '/usr/lib/ccache/g++'), ('GDMSESSION', 'ubuntu'), ('LESSCLOSE', '/usr/bin/lesspipe %s %s'), ('LC_MEASUREMENT', 'zh_CN.UTF-8'), ('GPG_AGENT_INFO', '/run/user/1000/gnupg/S.gpg-agent:0:1'), ('LC_IDENTIFICATION', 'zh_CN.UTF-8'), ('QT_IM_MODULE', 'ibus'), ('JETSON_CUDA_ARCH_BIN', '8.7'), ('PWD', '/home1/rs_ws/src/rs_to_velodyne/build/rs_to_velodyne'), ('CUDA_HOME', ':/usr/local/cuda'), ('XDG_CONFIG_DIRS', '/etc/xdg/xdg-ubuntu:/etc/xdg'), ('DBUS_STARTER_ADDRESS', 'unix:path=/run/user/1000/bus,guid=8381637caa2a69f430df8a170000029e'), ('XDG_DATA_DIRS', '/usr/share/ubuntu:/usr/share/gnome:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop'), ('PYTHONPATH', '/opt/ros/humble/lib/python3.10/site-packages:/opt/ros/humble/local/lib/python3.10/dist-packages'), ('HTTP_PROXY', 'http://127.0.0.1:7897/'), ('LC_NUMERIC', 'zh_CN.UTF-8'), ('LC_PAPER', 'zh_CN.UTF-8'), ('CC', '/usr/lib/ccache/gcc'), ('COLCON', '1'), ('VTE_VERSION', '6800'), ('JETSON_JETPACK', '6.2'), ('JETSON_P_NUMBER', 'p3701-0005'), ('CMAKE_PREFIX_PATH', '/opt/ros/humble')]), 'shell': False}
+[0.099237] (-) TimerEvent: {}
+[0.108662] (rs_to_velodyne) StdoutLine: {'line': b'\x1b[35m\x1b[1mConsolidate compiler generated dependencies of target rs_to_velodyne\x1b[0m\n'}
+[0.162767] (rs_to_velodyne) StdoutLine: {'line': b'[ 50%] \x1b[32mBuilding CXX object CMakeFiles/rs_to_velodyne.dir/src/rs_to_velodyne.cpp.o\x1b[0m\n'}
+[0.199396] (-) TimerEvent: {}
+[0.300058] (-) TimerEvent: {}
+[0.400852] (-) TimerEvent: {}
+[0.501565] (-) TimerEvent: {}
+[0.602297] (-) TimerEvent: {}
+[0.702915] (-) TimerEvent: {}
+[0.803560] (-) TimerEvent: {}
+[0.904192] (-) TimerEvent: {}
+[1.004811] (-) TimerEvent: {}
+[1.106036] (-) TimerEvent: {}
+[1.206870] (-) TimerEvent: {}
+[1.307686] (-) TimerEvent: {}
+[1.408516] (-) TimerEvent: {}
+[1.509468] (-) TimerEvent: {}
+[1.610754] (-) TimerEvent: {}
+[1.711520] (-) TimerEvent: {}
+[1.812355] (-) TimerEvent: {}
+[1.913195] (-) TimerEvent: {}
+[2.014009] (-) TimerEvent: {}
+[2.114847] (-) TimerEvent: {}
+[2.215688] (-) TimerEvent: {}
+[2.316539] (-) TimerEvent: {}
+[2.417283] (-) TimerEvent: {}
+[2.518077] (-) TimerEvent: {}
+[2.618730] (-) TimerEvent: {}
+[2.719362] (-) TimerEvent: {}
+[2.820048] (-) TimerEvent: {}
+[2.920725] (-) TimerEvent: {}
+[3.021563] (-) TimerEvent: {}
+[3.122386] (-) TimerEvent: {}
+[3.223206] (-) TimerEvent: {}
+[3.324013] (-) TimerEvent: {}
+[3.424815] (-) TimerEvent: {}
+[3.525635] (-) TimerEvent: {}
+[3.626258] (-) TimerEvent: {}
+[3.726917] (-) TimerEvent: {}
+[3.827542] (-) TimerEvent: {}
+[3.928192] (-) TimerEvent: {}
+[4.028886] (-) TimerEvent: {}
+[4.129526] (-) TimerEvent: {}
+[4.230153] (-) TimerEvent: {}
+[4.330785] (-) TimerEvent: {}
+[4.431410] (-) TimerEvent: {}
+[4.532039] (-) TimerEvent: {}
+[4.632706] (-) TimerEvent: {}
+[4.733378] (-) TimerEvent: {}
+[4.833979] (-) TimerEvent: {}
+[4.934586] (-) TimerEvent: {}
+[5.035236] (-) TimerEvent: {}
+[5.135892] (-) TimerEvent: {}
+[5.236527] (-) TimerEvent: {}
+[5.337155] (-) TimerEvent: {}
+[5.437903] (-) TimerEvent: {}
+[5.538574] (-) TimerEvent: {}
+[5.639200] (-) TimerEvent: {}
+[5.739858] (-) TimerEvent: {}
+[5.840491] (-) TimerEvent: {}
+[5.941149] (-) TimerEvent: {}
+[6.041785] (-) TimerEvent: {}
+[6.142429] (-) TimerEvent: {}
+[6.243053] (-) TimerEvent: {}
+[6.343689] (-) TimerEvent: {}
+[6.444353] (-) TimerEvent: {}
+[6.545050] (-) TimerEvent: {}
+[6.645718] (-) TimerEvent: {}
+[6.746307] (-) TimerEvent: {}
+[6.846959] (-) TimerEvent: {}
+[6.947594] (-) TimerEvent: {}
+[7.048234] (-) TimerEvent: {}
+[7.148898] (-) TimerEvent: {}
+[7.249699] (-) TimerEvent: {}
+[7.350342] (-) TimerEvent: {}
+[7.451048] (-) TimerEvent: {}
+[7.551765] (-) TimerEvent: {}
+[7.652399] (-) TimerEvent: {}
+[7.753047] (-) TimerEvent: {}
+[7.854503] (-) TimerEvent: {}
+[7.955123] (-) TimerEvent: {}
+[8.055711] (-) TimerEvent: {}
+[8.156360] (-) TimerEvent: {}
+[8.257019] (-) TimerEvent: {}
+[8.357673] (-) TimerEvent: {}
+[8.458360] (-) TimerEvent: {}
+[8.558996] (-) TimerEvent: {}
+[8.659622] (-) TimerEvent: {}
+[8.760271] (-) TimerEvent: {}
+[8.860930] (-) TimerEvent: {}
+[8.961639] (-) TimerEvent: {}
+[9.062305] (-) TimerEvent: {}
+[9.162938] (-) TimerEvent: {}
+[9.263574] (-) TimerEvent: {}
+[9.364203] (-) TimerEvent: {}
+[9.464888] (-) TimerEvent: {}
+[9.565548] (-) TimerEvent: {}
+[9.666176] (-) TimerEvent: {}
+[9.766811] (-) TimerEvent: {}
+[9.867458] (-) TimerEvent: {}
+[9.968097] (-) TimerEvent: {}
+[10.068756] (-) TimerEvent: {}
+[10.169412] (-) TimerEvent: {}
+[10.270048] (-) TimerEvent: {}
+[10.370674] (-) TimerEvent: {}
+[10.471293] (-) TimerEvent: {}
+[10.571911] (-) TimerEvent: {}
+[10.672593] (-) TimerEvent: {}
+[10.773256] (-) TimerEvent: {}
+[10.873873] (-) TimerEvent: {}
+[10.974531] (-) TimerEvent: {}
+[11.075156] (-) TimerEvent: {}
+[11.175794] (-) TimerEvent: {}
+[11.276347] (-) TimerEvent: {}
+[11.376968] (-) TimerEvent: {}
+[11.477599] (-) TimerEvent: {}
+[11.578232] (-) TimerEvent: {}
+[11.678838] (-) TimerEvent: {}
+[11.779452] (-) TimerEvent: {}
+[11.880071] (-) TimerEvent: {}
+[11.980691] (-) TimerEvent: {}
+[12.081354] (-) TimerEvent: {}
+[12.181997] (-) TimerEvent: {}
+[12.282635] (-) TimerEvent: {}
+[12.383298] (-) TimerEvent: {}
+[12.483941] (-) TimerEvent: {}
+[12.584573] (-) TimerEvent: {}
+[12.685220] (-) TimerEvent: {}
+[12.785848] (-) TimerEvent: {}
+[12.886470] (-) TimerEvent: {}
+[12.987126] (-) TimerEvent: {}
+[13.087764] (-) TimerEvent: {}
+[13.188386] (-) TimerEvent: {}
+[13.289008] (-) TimerEvent: {}
+[13.389646] (-) TimerEvent: {}
+[13.493285] (-) TimerEvent: {}
+[13.594097] (-) TimerEvent: {}
+[13.694916] (-) TimerEvent: {}
+[13.795719] (-) TimerEvent: {}
+[13.896513] (-) TimerEvent: {}
+[13.997213] (-) TimerEvent: {}
+[14.098047] (-) TimerEvent: {}
+[14.199256] (-) TimerEvent: {}
+[14.300073] (-) TimerEvent: {}
+[14.400837] (-) TimerEvent: {}
+[14.501533] (-) TimerEvent: {}
+[14.602414] (-) TimerEvent: {}
+[14.703212] (-) TimerEvent: {}
+[14.803946] (-) TimerEvent: {}
+[14.904808] (-) TimerEvent: {}
+[15.005854] (-) TimerEvent: {}
+[15.106699] (-) TimerEvent: {}
+[15.207418] (-) TimerEvent: {}
+[15.308186] (-) TimerEvent: {}
+[15.408984] (-) TimerEvent: {}
+[15.509816] (-) TimerEvent: {}
+[15.610641] (-) TimerEvent: {}
+[15.711424] (-) TimerEvent: {}
+[15.812042] (-) TimerEvent: {}
+[15.912689] (-) TimerEvent: {}
+[16.013506] (-) TimerEvent: {}
+[16.114184] (-) TimerEvent: {}
+[16.214992] (-) TimerEvent: {}
+[16.315709] (-) TimerEvent: {}
+[16.416530] (-) TimerEvent: {}
+[16.517170] (-) TimerEvent: {}
+[16.617972] (-) TimerEvent: {}
+[16.718813] (-) TimerEvent: {}
+[16.819586] (-) TimerEvent: {}
+[16.920288] (-) TimerEvent: {}
+[17.021053] (-) TimerEvent: {}
+[17.121720] (-) TimerEvent: {}
+[17.222563] (-) TimerEvent: {}
+[17.323377] (-) TimerEvent: {}
+[17.424065] (-) TimerEvent: {}
+[17.524784] (-) TimerEvent: {}
+[17.625661] (-) TimerEvent: {}
+[17.726429] (-) TimerEvent: {}
+[17.827069] (-) TimerEvent: {}
+[17.927813] (-) TimerEvent: {}
+[18.019870] (rs_to_velodyne) StderrLine: {'line': b'/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp: In instantiation of \xe2\x80\x98\x1b[01m\x1b[Kbool has_nan(T) [with T = pcl::PointXYZI]\x1b[m\x1b[K\xe2\x80\x99:\n'}
+[18.020746] (rs_to_velodyne) StderrLine: {'line': b'\x1b[01m\x1b[K/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp:109:20:\x1b[m\x1b[K   required from here\n'}
+[18.021027] (rs_to_velodyne) StderrLine: {'line': b'\x1b[01m\x1b[K/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp:82:18:\x1b[m\x1b[K \x1b[01;31m\x1b[Kerror: \x1b[m\x1b[K\xe2\x80\x98\x1b[01m\x1b[Kpcl_isnan\x1b[m\x1b[K\xe2\x80\x99 was not declared in this scope\n'}
+[18.021364] (rs_to_velodyne) StderrLine: {'line': b'   82 |     if (\x1b[01;31m\x1b[Kpcl_isnan(point.x)\x1b[m\x1b[K || pcl_isnan(point.y) || pcl_isnan(point.z)) {\n'}
+[18.021615] (rs_to_velodyne) StderrLine: {'line': b'      |         \x1b[01;31m\x1b[K~~~~~~~~~^~~~~~~~~\x1b[m\x1b[K\n'}
+[18.021862] (rs_to_velodyne) StderrLine: {'line': b'\x1b[01m\x1b[K/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp:82:40:\x1b[m\x1b[K \x1b[01;31m\x1b[Kerror: \x1b[m\x1b[K\xe2\x80\x98\x1b[01m\x1b[Kpcl_isnan\x1b[m\x1b[K\xe2\x80\x99 was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [\x1b[01;31m\x1b[K-fpermissive\x1b[m\x1b[K]\n'}
+[18.022143] (rs_to_velodyne) StderrLine: {'line': b'   82 |     if (pcl_isnan(point.x) || \x1b[01;31m\x1b[Kpcl_isnan(point.y)\x1b[m\x1b[K || pcl_isnan(point.z)) {\n'}
+[18.022395] (rs_to_velodyne) StderrLine: {'line': b'      |                               \x1b[01;31m\x1b[K~~~~~~~~~^~~~~~~~~\x1b[m\x1b[K\n'}
+[18.022815] (rs_to_velodyne) StderrLine: {'line': b'\x1b[01m\x1b[K/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp:82:62:\x1b[m\x1b[K \x1b[01;31m\x1b[Kerror: \x1b[m\x1b[K\xe2\x80\x98\x1b[01m\x1b[Kpcl_isnan\x1b[m\x1b[K\xe2\x80\x99 was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [\x1b[01;31m\x1b[K-fpermissive\x1b[m\x1b[K]\n'}
+[18.023168] (rs_to_velodyne) StderrLine: {'line': b'   82 |     if (pcl_isnan(point.x) || pcl_isnan(point.y) || \x1b[01;31m\x1b[Kpcl_isnan(point.z)\x1b[m\x1b[K) {\n'}
+[18.023436] (rs_to_velodyne) StderrLine: {'line': b'      |                                                     \x1b[01;31m\x1b[K~~~~~~~~~^~~~~~~~~\x1b[m\x1b[K\n'}
+[18.023675] (rs_to_velodyne) StderrLine: {'line': b'/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp: In instantiation of \xe2\x80\x98\x1b[01m\x1b[Kbool has_nan(T) [with T = RsPointXYZIRT]\x1b[m\x1b[K\xe2\x80\x99:\n'}
+[18.023911] (rs_to_velodyne) StderrLine: {'line': b'\x1b[01m\x1b[K/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp:136:20:\x1b[m\x1b[K   required from \xe2\x80\x98\x1b[01m\x1b[Kvoid handle_pc_msg(const typename pcl::PointCloud<PointT>::Ptr&, const typename pcl::PointCloud<PointOutT>::Ptr&) [with T_in_p = RsPointXYZIRT; T_out_p = VelodynePointXYZIRT; typename pcl::PointCloud<PointT>::Ptr = std::shared_ptr<pcl::PointCloud<RsPointXYZIRT> >; typename pcl::PointCloud<PointOutT>::Ptr = std::shared_ptr<pcl::PointCloud<VelodynePointXYZIRT> >]\x1b[m\x1b[K\xe2\x80\x99\n'}
+[18.024165] (rs_to_velodyne) StderrLine: {'line': b'\x1b[01m\x1b[K/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp:183:58:\x1b[m\x1b[K   required from here\n'}
+[18.024395] (rs_to_velodyne) StderrLine: {'line': b'\x1b[01m\x1b[K/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp:82:18:\x1b[m\x1b[K \x1b[01;31m\x1b[Kerror: \x1b[m\x1b[K\xe2\x80\x98\x1b[01m\x1b[Kpcl_isnan\x1b[m\x1b[K\xe2\x80\x99 was not declared in this scope\n'}
+[18.024627] (rs_to_velodyne) StderrLine: {'line': b'   82 |     if (\x1b[01;31m\x1b[Kpcl_isnan(point.x)\x1b[m\x1b[K || pcl_isnan(point.y) || pcl_isnan(point.z)) {\n'}
+[18.024851] (rs_to_velodyne) StderrLine: {'line': b'      |         \x1b[01;31m\x1b[K~~~~~~~~~^~~~~~~~~\x1b[m\x1b[K\n'}
+[18.025074] (rs_to_velodyne) StderrLine: {'line': b'\x1b[01m\x1b[K/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp:82:40:\x1b[m\x1b[K \x1b[01;31m\x1b[Kerror: \x1b[m\x1b[K\xe2\x80\x98\x1b[01m\x1b[Kpcl_isnan\x1b[m\x1b[K\xe2\x80\x99 was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [\x1b[01;31m\x1b[K-fpermissive\x1b[m\x1b[K]\n'}
+[18.025368] (rs_to_velodyne) StderrLine: {'line': b'   82 |     if (pcl_isnan(point.x) || \x1b[01;31m\x1b[Kpcl_isnan(point.y)\x1b[m\x1b[K || pcl_isnan(point.z)) {\n'}
+[18.025580] (rs_to_velodyne) StderrLine: {'line': b'      |                               \x1b[01;31m\x1b[K~~~~~~~~~^~~~~~~~~\x1b[m\x1b[K\n'}
+[18.025789] (rs_to_velodyne) StderrLine: {'line': b'\x1b[01m\x1b[K/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp:82:62:\x1b[m\x1b[K \x1b[01;31m\x1b[Kerror: \x1b[m\x1b[K\xe2\x80\x98\x1b[01m\x1b[Kpcl_isnan\x1b[m\x1b[K\xe2\x80\x99 was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [\x1b[01;31m\x1b[K-fpermissive\x1b[m\x1b[K]\n'}
+[18.026061] (rs_to_velodyne) StderrLine: {'line': b'   82 |     if (pcl_isnan(point.x) || pcl_isnan(point.y) || \x1b[01;31m\x1b[Kpcl_isnan(point.z)\x1b[m\x1b[K) {\n'}
+[18.026270] (rs_to_velodyne) StderrLine: {'line': b'      |                                                     \x1b[01;31m\x1b[K~~~~~~~~~^~~~~~~~~\x1b[m\x1b[K\n'}
+[18.026475] (rs_to_velodyne) StderrLine: {'line': b'\x1b[01m\x1b[K/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp:\x1b[m\x1b[K In function \xe2\x80\x98\x1b[01m\x1b[Kbool has_nan(T) [with T = pcl::PointXYZI]\x1b[m\x1b[K\xe2\x80\x99:\n'}
+[18.026730] (rs_to_velodyne) StderrLine: {'line': b'\x1b[01m\x1b[K/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp:87:1:\x1b[m\x1b[K \x1b[01;35m\x1b[Kwarning: \x1b[m\x1b[Kcontrol reaches end of non-void function [\x1b[01;35m\x1b[K-Wreturn-type\x1b[m\x1b[K]\n'}
+[18.026951] (rs_to_velodyne) StderrLine: {'line': b'   87 | \x1b[01;35m\x1b[K}\x1b[m\x1b[K\n'}
+[18.027161] (rs_to_velodyne) StderrLine: {'line': b'      | \x1b[01;35m\x1b[K^\x1b[m\x1b[K\n'}
+[18.027363] (rs_to_velodyne) StderrLine: {'line': b'\x1b[01m\x1b[K/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp:\x1b[m\x1b[K In function \xe2\x80\x98\x1b[01m\x1b[Kbool has_nan(T) [with T = RsPointXYZIRT]\x1b[m\x1b[K\xe2\x80\x99:\n'}
+[18.027658] (rs_to_velodyne) StderrLine: {'line': b'\x1b[01m\x1b[K/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp:87:1:\x1b[m\x1b[K \x1b[01;35m\x1b[Kwarning: \x1b[m\x1b[Kcontrol reaches end of non-void function [\x1b[01;35m\x1b[K-Wreturn-type\x1b[m\x1b[K]\n'}
+[18.027813] (-) TimerEvent: {}
+[18.028135] (rs_to_velodyne) StderrLine: {'line': b'   87 | \x1b[01;35m\x1b[K}\x1b[m\x1b[K\n'}
+[18.028313] (rs_to_velodyne) StderrLine: {'line': b'      | \x1b[01;35m\x1b[K^\x1b[m\x1b[K\n'}
+[18.028414] (rs_to_velodyne) StderrLine: {'line': b'gmake[2]: *** [CMakeFiles/rs_to_velodyne.dir/build.make:76\xef\xbc\x9aCMakeFiles/rs_to_velodyne.dir/src/rs_to_velodyne.cpp.o] \xe9\x94\x99\xe8\xaf\xaf 1\n'}
+[18.028505] (rs_to_velodyne) StderrLine: {'line': b'gmake[1]: *** [CMakeFiles/Makefile2:137\xef\xbc\x9aCMakeFiles/rs_to_velodyne.dir/all] \xe9\x94\x99\xe8\xaf\xaf 2\n'}
+[18.028873] (rs_to_velodyne) StderrLine: {'line': b'gmake: *** [Makefile:146\xef\xbc\x9aall] \xe9\x94\x99\xe8\xaf\xaf 2\n'}
+[18.035370] (rs_to_velodyne) CommandEnded: {'returncode': 2}
+[18.058755] (rs_to_velodyne) JobEnded: {'identifier': 'rs_to_velodyne', 'rc': 2}
+[18.070388] (-) EventReactorShutdown: {}

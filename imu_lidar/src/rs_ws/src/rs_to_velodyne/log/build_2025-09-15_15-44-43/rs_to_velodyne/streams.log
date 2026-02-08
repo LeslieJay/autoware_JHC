@@ -1,0 +1,38 @@
+[0.021s] Invoking command in '/home1/rs_ws/src/rs_to_velodyne/build/rs_to_velodyne': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home1/rs_ws/src/rs_to_velodyne/build/rs_to_velodyne -- -j12 -l12
+[0.113s] [35m[1mConsolidate compiler generated dependencies of target rs_to_velodyne[0m
+[0.164s] [ 50%] [32mBuilding CXX object CMakeFiles/rs_to_velodyne.dir/src/rs_to_velodyne.cpp.o[0m
+[17.230s] /home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp: In instantiation of ‘[01m[Kbool has_nan(T) [with T = pcl::PointXYZI][m[K’:
+[17.231s] [01m[K/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp:109:20:[m[K   required from here
+[17.231s] [01m[K/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp:82:18:[m[K [01;31m[Kerror: [m[K‘[01m[Kpcl_isnan[m[K’ was not declared in this scope
+[17.232s]    82 |     if ([01;31m[Kpcl_isnan(point.x)[m[K || pcl_isnan(point.y) || pcl_isnan(point.z)) {
+[17.232s]       |         [01;31m[K~~~~~~~~~^~~~~~~~~[m[K
+[17.233s] [01m[K/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp:82:40:[m[K [01;31m[Kerror: [m[K‘[01m[Kpcl_isnan[m[K’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [[01;31m[K-fpermissive[m[K]
+[17.233s]    82 |     if (pcl_isnan(point.x) || [01;31m[Kpcl_isnan(point.y)[m[K || pcl_isnan(point.z)) {
+[17.233s]       |                               [01;31m[K~~~~~~~~~^~~~~~~~~[m[K
+[17.233s] [01m[K/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp:82:62:[m[K [01;31m[Kerror: [m[K‘[01m[Kpcl_isnan[m[K’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [[01;31m[K-fpermissive[m[K]
+[17.233s]    82 |     if (pcl_isnan(point.x) || pcl_isnan(point.y) || [01;31m[Kpcl_isnan(point.z)[m[K) {
+[17.234s]       |                                                     [01;31m[K~~~~~~~~~^~~~~~~~~[m[K
+[17.234s] /home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp: In instantiation of ‘[01m[Kbool has_nan(T) [with T = RsPointXYZIRT][m[K’:
+[17.234s] [01m[K/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp:136:20:[m[K   required from ‘[01m[Kvoid handle_pc_msg(const typename pcl::PointCloud<PointT>::Ptr&, const typename pcl::PointCloud<PointOutT>::Ptr&) [with T_in_p = RsPointXYZIRT; T_out_p = VelodynePointXYZIRT; typename pcl::PointCloud<PointT>::Ptr = std::shared_ptr<pcl::PointCloud<RsPointXYZIRT> >; typename pcl::PointCloud<PointOutT>::Ptr = std::shared_ptr<pcl::PointCloud<VelodynePointXYZIRT> >][m[K’
+[17.234s] [01m[K/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp:183:58:[m[K   required from here
+[17.235s] [01m[K/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp:82:18:[m[K [01;31m[Kerror: [m[K‘[01m[Kpcl_isnan[m[K’ was not declared in this scope
+[17.235s]    82 |     if ([01;31m[Kpcl_isnan(point.x)[m[K || pcl_isnan(point.y) || pcl_isnan(point.z)) {
+[17.235s]       |         [01;31m[K~~~~~~~~~^~~~~~~~~[m[K
+[17.235s] [01m[K/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp:82:40:[m[K [01;31m[Kerror: [m[K‘[01m[Kpcl_isnan[m[K’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [[01;31m[K-fpermissive[m[K]
+[17.235s]    82 |     if (pcl_isnan(point.x) || [01;31m[Kpcl_isnan(point.y)[m[K || pcl_isnan(point.z)) {
+[17.235s]       |                               [01;31m[K~~~~~~~~~^~~~~~~~~[m[K
+[17.236s] [01m[K/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp:82:62:[m[K [01;31m[Kerror: [m[K‘[01m[Kpcl_isnan[m[K’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [[01;31m[K-fpermissive[m[K]
+[17.236s]    82 |     if (pcl_isnan(point.x) || pcl_isnan(point.y) || [01;31m[Kpcl_isnan(point.z)[m[K) {
+[17.236s]       |                                                     [01;31m[K~~~~~~~~~^~~~~~~~~[m[K
+[17.236s] [01m[K/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp:[m[K In function ‘[01m[Kbool has_nan(T) [with T = pcl::PointXYZI][m[K’:
+[17.236s] [01m[K/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp:87:1:[m[K [01;35m[Kwarning: [m[Kcontrol reaches end of non-void function [[01;35m[K-Wreturn-type[m[K]
+[17.237s]    87 | [01;35m[K}[m[K
+[17.238s]       | [01;35m[K^[m[K
+[17.238s] [01m[K/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp:[m[K In function ‘[01m[Kbool has_nan(T) [with T = RsPointXYZIRT][m[K’:
+[17.238s] [01m[K/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp:87:1:[m[K [01;35m[Kwarning: [m[Kcontrol reaches end of non-void function [[01;35m[K-Wreturn-type[m[K]
+[17.239s]    87 | [01;35m[K}[m[K
+[17.240s]       | [01;35m[K^[m[K
+[17.240s] gmake[2]: *** [CMakeFiles/rs_to_velodyne.dir/build.make:76：CMakeFiles/rs_to_velodyne.dir/src/rs_to_velodyne.cpp.o] 错误 1
+[17.241s] gmake[1]: *** [CMakeFiles/Makefile2:137：CMakeFiles/rs_to_velodyne.dir/all] 错误 2
+[17.241s] gmake: *** [Makefile:146：all] 错误 2
+[17.245s] Invoked command in '/home1/rs_ws/src/rs_to_velodyne/build/rs_to_velodyne' returned '2': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home1/rs_ws/src/rs_to_velodyne/build/rs_to_velodyne -- -j12 -l12

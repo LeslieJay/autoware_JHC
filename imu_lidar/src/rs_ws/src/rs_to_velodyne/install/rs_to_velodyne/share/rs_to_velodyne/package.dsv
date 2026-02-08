@@ -1,0 +1,5 @@
+source;share/rs_to_velodyne/local_setup.bash
+source;share/rs_to_velodyne/local_setup.dsv
+source;share/rs_to_velodyne/local_setup.ps1
+source;share/rs_to_velodyne/local_setup.sh
+source;share/rs_to_velodyne/local_setup.zsh

@@ -1,0 +1,135 @@
+/**:
+  ros__parameters:
+    lane_change:
+
+      # =============================
+      # 基础
+      # =============================
+      time_limit: 50.0
+      backward_lane_length: 100.0
+      enable_stopped_vehicle_buffer: false
+
+
+      # =============================
+      # 转向灯（AGV不需要等待）
+      # =============================
+      min_length_for_turn_signal_activation: 0.0
+
+
+      # =============================
+      # 轨迹生成 ⭐⭐⭐ 核心
+      # =============================
+      trajectory:
+
+        # 原来 2~4s → 太慢
+        min_prepare_duration: 0.3
+        max_prepare_duration: 0.8
+
+        # 原来 0.5 → 极慢
+        lateral_jerk: 5.0
+
+        # 提高横向能力（更快并线）
+        min_longitudinal_acc: -2.0
+        max_longitudinal_acc: 2.0
+
+        th_prepare_length_diff: 0.5
+        th_lane_changing_length_diff: 0.5
+
+        # ⭐ 允许低速换道（非常关键）
+        min_lane_changing_velocity: 0.3
+
+        lon_acc_sampling_num: 3
+        lat_acc_sampling_num: 5
+
+        lane_changing_decel_factor: 0.2
+
+        th_prepare_curvature: 0.1
+
+
+      # =============================
+      # 延迟换道 ❌ 关闭
+      # =============================
+      delay_lane_change:
+        enable: false
+
+
+      # =============================
+      # Frenet（保留）
+      # =============================
+      frenet:
+        enable: true
+        th_yaw_diff: 15.0
+        th_curvature_smoothing: 0.2
+
+
+      # =============================
+      # Safety check ❌ 基本关闭
+      # =============================
+      safety_check:
+        allow_loose_check_for_cancel: true
+        enable_target_lane_bound_check: false
+
+
+      # =============================
+      # 横向加速度（提高）
+      # =============================
+      lateral_acceleration:
+        velocity: [0.0, 4.0, 10.0]
+        min_values: [1.0, 1.5, 2.0]
+        max_values: [2.0, 2.5, 3.0]
+
+
+      # =============================
+      # 目标物（全开）
+      # =============================
+      target_object:
+        car: true
+        truck: true
+        bus: true
+        trailer: true
+        unknown: true
+        bicycle: true
+        motorcycle: true
+        pedestrian: true
+
+
+      # =============================
+      # 法规限制 ❌ 全关（园区）
+      # =============================
+      regulation:
+        crosswalk: false
+        intersection: false
+        traffic_light: false
+
+
+      # =============================
+      # 卡死检测（更激进）
+      # =============================
+      stuck_detection:
+        velocity: 0.2
+        stop_time: 1.0
+
+
+      # =============================
+      # 碰撞检测（极简）
+      # =============================
+      collision_check:
+        check_current_lanes: false
+        check_other_lanes: false
+        use_all_predicted_paths: false
+
+
+      # =============================
+      # Cancel ❌ 禁止中途放弃
+      # =============================
+      cancel:
+        enable_on_prepare_phase: false
+        enable_on_lane_changing_phase: false
+
+
+      lane_change_finish_judge_buffer: 0.3
+      finish_judge_lateral_threshold: 0.3
+      finish_judge_lateral_angle_deviation: 5.0
+
+
+      publish_debug_marker: true

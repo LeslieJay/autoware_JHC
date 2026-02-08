@@ -1,0 +1,4 @@
+Invoking command in '/home1/rs_ws/src/rs_to_velodyne/build/rs_to_velodyne': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake /home1/rs_ws/src/rs_to_velodyne -DCMAKE_INSTALL_PREFIX=/home1/rs_ws/src/rs_to_velodyne/install/rs_to_velodyne
+Invoked command in '/home1/rs_ws/src/rs_to_velodyne/build/rs_to_velodyne' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake /home1/rs_ws/src/rs_to_velodyne -DCMAKE_INSTALL_PREFIX=/home1/rs_ws/src/rs_to_velodyne/install/rs_to_velodyne
+Invoking command in '/home1/rs_ws/src/rs_to_velodyne/build/rs_to_velodyne': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home1/rs_ws/src/rs_to_velodyne/build/rs_to_velodyne -- -j12 -l12
+Invoked command in '/home1/rs_ws/src/rs_to_velodyne/build/rs_to_velodyne' returned '2': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home1/rs_ws/src/rs_to_velodyne/build/rs_to_velodyne -- -j12 -l12

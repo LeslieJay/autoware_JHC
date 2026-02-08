@@ -1,0 +1,61 @@
+<launch>
+  <arg name="input/twist" default="/sensing/vehicle_velocity_converter/twist_with_covariance"/>
+  <arg name="output" default="/sensing/lidar/concatenated/pointcloud"/>
+  <arg name="param_file" default="/media/f/nvme_storage/autoware/src/universe/autoware_universe/sensing/autoware_pointcloud_preprocessor/config/concatenate_and_time_sync_node.param.yaml"/>
+
+  <node_container pkg="rclcpp_components" exec="component_container" name="lidar_processing_container" namespace="">
+    
+    <composable_node pkg="lidar_transform" plugin="autoware::lidar_transform::LidarTransformNode" name="top_lidar_transform">
+      <param name="RadiusOutlierFilter" value="1.5"/>
+      <param name="transform_x" value="0.99"/>
+      <param name="transform_y" value="0.0"/>
+      <param name="transform_z" value="2.08"/>
+      <param name="transform_roll" value="0.0"/>
+      <param name="transform_pitch" value="0.0"/>
+      <param name="transform_yaw" value="0.0"/>
+      </composable_node>
+
+    <composable_node pkg="lidar_transform" plugin="autoware::lidar_transform::SideLidarCropBoxNode" name="left_lidar_cropbox">
+      <param name="input_topic" value="/rslidar_left/points"/>
+      <param name="output_topic" value="/sensing/lidar/left/outlier_filtered/pointcloud"/>
+      <param name="transform_x" value="1.3654"/>
+      <param name="transform_y" value="0.5625"/>
+      <param name="transform_z" value="0.324"/>
+      <param name="transform_roll" value="3.14159265"/>
+      <param name="transform_pitch" value="0.0"/>
+      <param name="transform_yaw" value="0.0"/> 
+      <param name="crop_min_x" value="-2.0"/>
+      <param name="crop_max_x" value="0.0"/>
+      <param name="crop_min_y" value="-1.5"/>
+      <param name="crop_max_y" value="0.5"/>
+      <param name="crop_min_z" value="0.0"/>
+      <param name="crop_max_z" value="0.5"/>
+      <param name="crop_radius" value="0.8"/>
+    </composable_node>
+
+    <composable_node pkg="lidar_transform" plugin="autoware::lidar_transform::SideLidarCropBoxNode" name="right_lidar_cropbox">
+      <param name="input_topic" value="/rslidar_right/points"/>
+      <param name="output_topic" value="/sensing/lidar/right/outlier_filtered/pointcloud"/>
+      <param name="transform_x" value="1.3654"/>
+      <param name="transform_y" value="-0.5625"/>
+      <param name="transform_z" value="0.324"/>
+      <param name="transform_roll" value="3.14159265"/>
+      <param name="transform_pitch" value="0.0"/>
+      <param name="transform_yaw" value="0.0"/> 
+      <param name="crop_min_x" value="-2.0"/>
+      <param name="crop_max_x" value="0.0"/>
+      <param name="crop_min_y" value="0.0"/>
+      <param name="crop_max_y" value="1.5"/>
+      <param name="crop_min_z" value="0.0"/>
+      <param name="crop_max_z" value="0.5"/>
+      <param name="crop_radius" value="0.8"/>
+    </composable_node>
+
+  </node_container>
+  <node pkg="autoware_pointcloud_preprocessor" exec="concatenate_and_time_sync_node" name="concatenate_and_time_sync_node" output="screen">
+    <remap from="~/input/twist" to="$(var input/twist)"/>
+    <remap from="output" to="$(var output)"/>
+    <param from="$(var param_file)"/>
+  </node>
+
+</launch>

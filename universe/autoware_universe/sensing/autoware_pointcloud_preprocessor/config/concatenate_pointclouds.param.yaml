@@ -1,0 +1,12 @@
+/**:
+  ros__parameters:
+    output_frame: base_link
+    input_topics: [
+                    "/sensing/lidar/top/outlier_filtered/pointcloud",
+                    "/sensing/lidar/left/outlier_filtered/pointcloud",
+                    "/sensing/lidar/right/outlier_filtered/pointcloud"
+                ]
+    max_queue_size: 10
+    timeout_sec: 5.0
+    input_offset: [0.0 ,0.0,0.0]
+  

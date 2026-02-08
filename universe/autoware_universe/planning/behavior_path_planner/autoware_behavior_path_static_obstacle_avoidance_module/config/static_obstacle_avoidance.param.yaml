@@ -1,0 +1,122 @@
+/**:
+  ros__parameters:
+    avoidance:
+
+      # ========================
+      # 1. 可用路面 —— 放到最大
+      # ========================
+      use_lane_type: "opposite_direction_lane"
+      use_intersection_areas: true
+      use_hatched_road_markings: true
+      use_freespace_areas: true
+
+      # ========================
+      # 2. 目标物体 —— 贴得很近
+      # ========================
+      target_object:
+        car:
+          th_moving_speed: 1.5
+          th_moving_time: 1.0
+          longitudinal_margin: -0.5
+          lateral_margin:
+            soft_margin: 0.2
+            hard_margin: 0.05
+            hard_margin_for_parked_vehicle: 0.1
+          envelope_buffer_margin: 0.05
+
+        truck:
+          th_moving_speed: 1.5
+          th_moving_time: 1.0
+          longitudinal_margin: -0.5
+          lateral_margin:
+            soft_margin: 0.25
+            hard_margin: 0.1
+            hard_margin_for_parked_vehicle: 0.15
+          envelope_buffer_margin: 0.05
+
+        pedestrian:
+          th_moving_speed: 0.5
+          th_moving_time: 0.5
+          longitudinal_margin: 0.0
+          lateral_margin:
+            soft_margin: 0.3
+            hard_margin: 0.15
+            hard_margin_for_parked_vehicle: 0.15
+
+        unknown:
+          th_moving_speed: 0.5
+          th_moving_time: 0.5
+          longitudinal_margin: -0.5
+          lateral_margin:
+            soft_margin: 0.2
+            hard_margin: 0.0
+            hard_margin_for_parked_vehicle: 0.0
+
+      # ========================
+      # 3. 目标过滤 —— 宁可多绕
+      # ========================
+      target_filtering:
+        detection_area:
+          static: true
+          min_forward_distance: 20.0
+          max_forward_distance: 200.0
+          backward_distance: 5.0
+
+        parked_vehicle:
+          th_offset_from_centerline: 0.3
+          th_shiftable_ratio: 0.3
+
+        avoidance_for_ambiguous_vehicle:
+          policy: "auto"
+          condition:
+            th_stopped_time: 1.0
+            th_moving_distance: 0.3
+
+      # ========================
+      # 4. Safety Check —— 大幅弱化
+      # ========================
+      safety_check:
+        enable: false
+        check_current_lane: false
+        check_shift_side_lane: false
+        check_other_side_lane: false
+
+      # ========================
+      # 5. 横向执行 —— 极易触发
+      # ========================
+      avoidance:
+        lateral:
+          th_avoid_execution: 0.01
+          soft_drivable_bound_margin: 0.05
+          hard_drivable_bound_margin: 0.0
+          max_right_shift_length: 8.0
+          max_left_shift_length: 8.0
+          max_deviation_from_lane: 1.5
+          ratio_for_return_shift_approval: 0.0
+
+        longitudinal:
+          min_prepare_time: 0.1
+          max_prepare_time: 0.3
+          min_prepare_distance: 0.1
+          min_slow_down_speed: 0.1
+          consider_front_overhang: false
+          consider_rear_overhang: false
+
+      # ========================
+      # 6. 行为策略 —— 强行执行
+      # ========================
+      policy:
+        make_approval_request: "per_avoidance_maneuver"
+        deceleration: "best_effort"
+        lateral_margin: "best_effort"
+        use_shorten_margin_immediately: true
+
+      # ========================
+      # 7. Yield / Stop —— 基本不等
+      # ========================
+      yield:
+        enable: false
+
+      stop:
+        max_distance: 5.0
+        stop_buffer: 1.0

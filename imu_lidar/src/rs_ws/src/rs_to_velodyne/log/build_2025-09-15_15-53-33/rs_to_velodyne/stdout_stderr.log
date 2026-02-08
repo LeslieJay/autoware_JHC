@@ -1,0 +1,36 @@
+[35m[1mConsolidate compiler generated dependencies of target rs_to_velodyne[0m
+[ 50%] [32mBuilding CXX object CMakeFiles/rs_to_velodyne.dir/src/rs_to_velodyne.cpp.o[0m
+/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp: In instantiation of ‘[01m[Kbool has_nan(T) [with T = pcl::PointXYZI][m[K’:
+[01m[K/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp:109:20:[m[K   required from here
+[01m[K/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp:82:18:[m[K [01;31m[Kerror: [m[K‘[01m[Kpcl_isnan[m[K’ was not declared in this scope
+   82 |     if ([01;31m[Kpcl_isnan(point.x)[m[K || pcl_isnan(point.y) || pcl_isnan(point.z)) {
+      |         [01;31m[K~~~~~~~~~^~~~~~~~~[m[K
+[01m[K/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp:82:40:[m[K [01;31m[Kerror: [m[K‘[01m[Kpcl_isnan[m[K’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [[01;31m[K-fpermissive[m[K]
+   82 |     if (pcl_isnan(point.x) || [01;31m[Kpcl_isnan(point.y)[m[K || pcl_isnan(point.z)) {
+      |                               [01;31m[K~~~~~~~~~^~~~~~~~~[m[K
+[01m[K/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp:82:62:[m[K [01;31m[Kerror: [m[K‘[01m[Kpcl_isnan[m[K’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [[01;31m[K-fpermissive[m[K]
+   82 |     if (pcl_isnan(point.x) || pcl_isnan(point.y) || [01;31m[Kpcl_isnan(point.z)[m[K) {
+      |                                                     [01;31m[K~~~~~~~~~^~~~~~~~~[m[K
+/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp: In instantiation of ‘[01m[Kbool has_nan(T) [with T = RsPointXYZIRT][m[K’:
+[01m[K/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp:136:20:[m[K   required from ‘[01m[Kvoid handle_pc_msg(const typename pcl::PointCloud<PointT>::Ptr&, const typename pcl::PointCloud<PointOutT>::Ptr&) [with T_in_p = RsPointXYZIRT; T_out_p = VelodynePointXYZIRT; typename pcl::PointCloud<PointT>::Ptr = std::shared_ptr<pcl::PointCloud<RsPointXYZIRT> >; typename pcl::PointCloud<PointOutT>::Ptr = std::shared_ptr<pcl::PointCloud<VelodynePointXYZIRT> >][m[K’
+[01m[K/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp:183:58:[m[K   required from here
+[01m[K/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp:82:18:[m[K [01;31m[Kerror: [m[K‘[01m[Kpcl_isnan[m[K’ was not declared in this scope
+   82 |     if ([01;31m[Kpcl_isnan(point.x)[m[K || pcl_isnan(point.y) || pcl_isnan(point.z)) {
+      |         [01;31m[K~~~~~~~~~^~~~~~~~~[m[K
+[01m[K/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp:82:40:[m[K [01;31m[Kerror: [m[K‘[01m[Kpcl_isnan[m[K’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [[01;31m[K-fpermissive[m[K]
+   82 |     if (pcl_isnan(point.x) || [01;31m[Kpcl_isnan(point.y)[m[K || pcl_isnan(point.z)) {
+      |                               [01;31m[K~~~~~~~~~^~~~~~~~~[m[K
+[01m[K/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp:82:62:[m[K [01;31m[Kerror: [m[K‘[01m[Kpcl_isnan[m[K’ was not declared in this scope, and no declarations were found by argument-dependent lookup at the point of instantiation [[01;31m[K-fpermissive[m[K]
+   82 |     if (pcl_isnan(point.x) || pcl_isnan(point.y) || [01;31m[Kpcl_isnan(point.z)[m[K) {
+      |                                                     [01;31m[K~~~~~~~~~^~~~~~~~~[m[K
+[01m[K/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp:[m[K In function ‘[01m[Kbool has_nan(T) [with T = pcl::PointXYZI][m[K’:
+[01m[K/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp:87:1:[m[K [01;35m[Kwarning: [m[Kcontrol reaches end of non-void function [[01;35m[K-Wreturn-type[m[K]
+   87 | [01;35m[K}[m[K
+      | [01;35m[K^[m[K
+[01m[K/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp:[m[K In function ‘[01m[Kbool has_nan(T) [with T = RsPointXYZIRT][m[K’:
+[01m[K/home1/rs_ws/src/rs_to_velodyne/src/rs_to_velodyne.cpp:87:1:[m[K [01;35m[Kwarning: [m[Kcontrol reaches end of non-void function [[01;35m[K-Wreturn-type[m[K]
+   87 | [01;35m[K}[m[K
+      | [01;35m[K^[m[K
+gmake[2]: *** [CMakeFiles/rs_to_velodyne.dir/build.make:76：CMakeFiles/rs_to_velodyne.dir/src/rs_to_velodyne.cpp.o] 错误 1
+gmake[1]: *** [CMakeFiles/Makefile2:137：CMakeFiles/rs_to_velodyne.dir/all] 错误 2
+gmake: *** [Makefile:146：all] 错误 2

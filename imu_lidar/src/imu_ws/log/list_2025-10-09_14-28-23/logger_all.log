@@ -1,0 +1,84 @@
+[0.532s] colcon DEBUG Command line arguments: ['/usr/bin/colcon', 'list', '-p', '--base-paths', '/home1/autoware/src/imu_lidar/src/imu_ws']
+[0.532s] colcon DEBUG Parsed command line arguments: Namespace(log_base=None, log_level=None, verb_name='list', build_base='build', ignore_user_meta=False, metas=['./colcon.meta'], base_paths=['/home1/autoware/src/imu_lidar/src/imu_ws'], packages_ignore=None, packages_ignore_regex=None, paths=None, packages_up_to=None, packages_up_to_regex=None, packages_above=None, packages_above_and_dependencies=None, packages_above_depth=None, packages_select_by_dep=None, packages_skip_by_dep=None, packages_skip_up_to=None, packages_select_build_failed=False, packages_skip_build_finished=False, packages_select_test_failures=False, packages_skip_test_passed=False, packages_select=None, packages_skip=None, packages_select_regex=None, packages_skip_regex=None, packages_start=None, packages_end=None, allow_overriding=[], topological_order=False, names_only=False, paths_only=True, topological_graph=False, topological_graph_dot=False, topological_graph_density=False, topological_graph_legend=False, topological_graph_dot_cluster=False, topological_graph_dot_include_skipped=False, mixin_files=None, mixin=None, verb_parser=<colcon_mixin.mixin.mixin_argument.MixinArgumentDecorator object at 0xffffa970ee90>, verb_extension=<colcon_package_information.verb.list.ListVerb object at 0xffffa9823be0>, main=<bound method ListVerb.main of <colcon_package_information.verb.list.ListVerb object at 0xffffa9823be0>>, mixin_verb=('list',))
+[0.688s] colcon.colcon_core.package_discovery Level 1 discover_packages(colcon_meta) check parameters
+[0.689s] colcon.colcon_core.package_discovery Level 1 discover_packages(recursive) check parameters
+[0.689s] colcon.colcon_core.package_discovery Level 1 discover_packages(ignore) check parameters
+[0.689s] colcon.colcon_core.package_discovery Level 1 discover_packages(path) check parameters
+[0.689s] colcon.colcon_core.package_discovery Level 1 discover_packages(recursive) discover
+[0.690s] colcon.colcon_core.package_discovery INFO Crawling recursively for packages in '/home1/autoware/src/imu_lidar/src/imu_ws'
+[0.691s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws) by extensions ['ignore', 'ignore_ament_install']
+[0.691s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws) by extension 'ignore'
+[0.692s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws) by extension 'ignore_ament_install'
+[0.692s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws) by extensions ['colcon_pkg']
+[0.692s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws) by extension 'colcon_pkg'
+[0.692s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws) by extensions ['colcon_meta']
+[0.692s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws) by extension 'colcon_meta'
+[0.693s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws) by extensions ['ros']
+[0.693s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws) by extension 'ros'
+[0.745s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws) by extensions ['cmake', 'python']
+[0.745s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws) by extension 'cmake'
+[0.746s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws) by extension 'python'
+[0.746s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws) by extensions ['python_setup_py']
+[0.746s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws) by extension 'python_setup_py'
+[0.746s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/log) by extensions ['ignore', 'ignore_ament_install']
+[0.747s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/log) by extension 'ignore'
+[0.747s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/log) ignored
+[0.748s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src) by extensions ['ignore', 'ignore_ament_install']
+[0.748s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src) by extension 'ignore'
+[0.748s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src) by extension 'ignore_ament_install'
+[0.748s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src) by extensions ['colcon_pkg']
+[0.748s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src) by extension 'colcon_pkg'
+[0.748s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src) by extensions ['colcon_meta']
+[0.748s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src) by extension 'colcon_meta'
+[0.749s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src) by extensions ['ros']
+[0.749s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src) by extension 'ros'
+[0.749s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src) by extensions ['cmake', 'python']
+[0.749s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src) by extension 'cmake'
+[0.749s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src) by extension 'python'
+[0.749s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src) by extensions ['python_setup_py']
+[0.749s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src) by extension 'python_setup_py'
+[0.750s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/serial_ros2) by extensions ['ignore', 'ignore_ament_install']
+[0.750s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/serial_ros2) by extension 'ignore'
+[0.750s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/serial_ros2) by extension 'ignore_ament_install'
+[0.750s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/serial_ros2) by extensions ['colcon_pkg']
+[0.750s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/serial_ros2) by extension 'colcon_pkg'
+[0.751s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/serial_ros2) by extensions ['colcon_meta']
+[0.751s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/serial_ros2) by extension 'colcon_meta'
+[0.751s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/serial_ros2) by extensions ['ros']
+[0.751s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/serial_ros2) by extension 'ros'
+[0.759s] colcon.colcon_core.package_identification DEBUG Package '/home1/autoware/src/imu_lidar/src/imu_ws/src/serial_ros2' with type 'ros.ament_cmake' and name 'serial'
+[0.760s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/yesense_ros2) by extensions ['ignore', 'ignore_ament_install']
+[0.760s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/yesense_ros2) by extension 'ignore'
+[0.760s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/yesense_ros2) by extension 'ignore_ament_install'
+[0.761s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/yesense_ros2) by extensions ['colcon_pkg']
+[0.761s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/yesense_ros2) by extension 'colcon_pkg'
+[0.761s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/yesense_ros2) by extensions ['colcon_meta']
+[0.761s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/yesense_ros2) by extension 'colcon_meta'
+[0.761s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/yesense_ros2) by extensions ['ros']
+[0.761s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/yesense_ros2) by extension 'ros'
+[0.762s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/yesense_ros2) by extensions ['cmake', 'python']
+[0.762s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/yesense_ros2) by extension 'cmake'
+[0.762s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/yesense_ros2) by extension 'python'
+[0.762s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/yesense_ros2) by extensions ['python_setup_py']
+[0.762s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/yesense_ros2) by extension 'python_setup_py'
+[0.763s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/yesense_ros2/yesense_interface) by extensions ['ignore', 'ignore_ament_install']
+[0.763s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/yesense_ros2/yesense_interface) by extension 'ignore'
+[0.763s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/yesense_ros2/yesense_interface) by extension 'ignore_ament_install'
+[0.764s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/yesense_ros2/yesense_interface) by extensions ['colcon_pkg']
+[0.764s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/yesense_ros2/yesense_interface) by extension 'colcon_pkg'
+[0.764s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/yesense_ros2/yesense_interface) by extensions ['colcon_meta']
+[0.764s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/yesense_ros2/yesense_interface) by extension 'colcon_meta'
+[0.764s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/yesense_ros2/yesense_interface) by extensions ['ros']
+[0.764s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/yesense_ros2/yesense_interface) by extension 'ros'
+[0.766s] colcon.colcon_core.package_identification DEBUG Package '/home1/autoware/src/imu_lidar/src/imu_ws/src/yesense_ros2/yesense_interface' with type 'ros.ament_cmake' and name 'yesense_interface'
+[0.766s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/yesense_ros2/yesense_std_ros2) by extensions ['ignore', 'ignore_ament_install']
+[0.767s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/yesense_ros2/yesense_std_ros2) by extension 'ignore'
+[0.767s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/yesense_ros2/yesense_std_ros2) by extension 'ignore_ament_install'
+[0.767s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/yesense_ros2/yesense_std_ros2) by extensions ['colcon_pkg']
+[0.767s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/yesense_ros2/yesense_std_ros2) by extension 'colcon_pkg'
+[0.767s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/yesense_ros2/yesense_std_ros2) by extensions ['colcon_meta']
+[0.767s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/yesense_ros2/yesense_std_ros2) by extension 'colcon_meta'
+[0.767s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/yesense_ros2/yesense_std_ros2) by extensions ['ros']
+[0.768s] colcon.colcon_core.package_identification Level 1 _identify(/home1/autoware/src/imu_lidar/src/imu_ws/src/yesense_ros2/yesense_std_ros2) by extension 'ros'
+[0.770s] colcon.colcon_core.package_identification DEBUG Package '/home1/autoware/src/imu_lidar/src/imu_ws/src/yesense_ros2/yesense_std_ros2' with type 'ros.ament_cmake' and name 'yesense_std_ros2'
+[0.770s] colcon.colcon_core.package_discovery Level 1 discover_packages(recursive) using defaults

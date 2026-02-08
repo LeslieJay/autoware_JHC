@@ -1,0 +1,79 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-7ef4c9b92021d5b9dc8f.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.12"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"name" : "",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "rs_to_velodyne",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "rs_to_velodyne::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-rs_to_velodyne-0dfd1f016b66b4e612c4.json",
+					"name" : "rs_to_velodyne",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "rs_to_velodyne_uninstall::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-rs_to_velodyne_uninstall-d57c1ca175a1eafce0ad.json",
+					"name" : "rs_to_velodyne_uninstall",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "uninstall::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-uninstall-7390b7ffb0c8a8ddeac9.json",
+					"name" : "uninstall",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home1/rs_ws/src/rs_to_velodyne/build/rs_to_velodyne",
+		"source" : "/home1/rs_ws/src/rs_to_velodyne"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 3
+	}
+}
