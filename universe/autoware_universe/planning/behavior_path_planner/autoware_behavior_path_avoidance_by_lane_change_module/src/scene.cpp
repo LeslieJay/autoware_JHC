@@ -114,10 +114,10 @@ bool AvoidanceByLaneChange::specialRequiredCheck() const
   const auto num_of_avoidance_targets =
     std::accumulate(object_parameters.begin(), object_parameters.end(), 0UL, count_target_object);
 
-  if (num_of_avoidance_targets < 1) {
-    RCLCPP_DEBUG(logger_, "no avoidance target");
-    return false;
-  }
+  // if (num_of_avoidance_targets < 1) {
+  //   RCLCPP_DEBUG(logger_, "no avoidance target");
+  //   return false;
+  // }
 
   const auto & nearest_object = data.target_objects.front();
   const auto minimum_avoid_length = calcMinAvoidanceLength(nearest_object);

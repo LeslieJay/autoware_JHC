@@ -8,7 +8,7 @@
     <arg name="pointcloud_container_name" value="$(var pointcloud_container_name)"/>
   </include>
 
-  
+  <!-- 
   <include file="$(find-pkg-share lidar_transform)/launch/points_raw_transform.launch.xml">
     <arg name="RadiusOutlierFilter"  value="1.5"/>
     <arg name="transform_x" value="0.99565"/>
@@ -18,5 +18,14 @@
     <arg name="transform_pitch"  value="0.0"/>
     <arg name="transform_yaw" value="0.0"/>
   </include>
- 
+  -->
+
+  <include file="$(find-pkg-share lidar_transform)/launch/concatenated_pointclouds.xml">
+    <arg name="input/twist" value="/sensing/vehicle_velocity_converter/twist_with_covariance"/>
+    <arg name="output" value="/sensing/lidar/concatenated/pointcloud"/>
+    <arg name="param_file" value="/media/f/nvme_storage/autoware/src/universe/autoware_universe/sensing/autoware_pointcloud_preprocessor/config/concatenate_and_time_sync_node.param.yaml"/>
+  </include>
+
+
+
 </launch>

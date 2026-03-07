@@ -8,7 +8,7 @@ Supports multiple goals with sequential execution and arrival detection.
 
 import rclpy
 from rclpy.node import Node
-from autoware_adapi_v1_msgs.srv import SetRoutePoints
+from autoware_adapi_v1_msgs.srv import SetRoutePoints, ClearRoute
 from autoware_adapi_v1_msgs.msg import RouteState
 from geometry_msgs.msg import Pose
 from std_msgs.msg import Header
@@ -58,10 +58,14 @@ class SetGoalNode(Node):
         self.route_state = self.ROUTE_STATE_UNKNOWN
         self.goal_sent = False
 
-        # Create service client
+        # Create service clients
         self.client = self.create_client(
             SetRoutePoints,
             '/api/routing/set_route_points'
+        )
+        self.clear_route_client = self.create_client(
+            ClearRoute,
+            '/api/routing/clear_route'
         )
 
         # Subscribe to routing state
@@ -74,11 +78,13 @@ class SetGoalNode(Node):
 
         self.get_logger().info('Waiting for /api/routing/set_route_points service...')
 
-        # Wait for service to be available
+        # Wait for services to be available
         while not self.client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('Service not available, waiting...')
+            self.get_logger().info('set_route_points service not available, waiting...')
+        while not self.clear_route_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('clear_route service not available, waiting...')
 
-        self.get_logger().info('Service is available!')
+        self.get_logger().info('All services are available!')
         self.get_logger().info(f'Loaded {len(self.goals)} goals: {[g["name"] for g in self.goals]}')
 
         # Send first goal
@@ -165,8 +171,42 @@ class SetGoalNode(Node):
                 self.get_logger().info('All goals completed!')
                 return
 
-        # Send next goal
-        self.send_current_goal()
+        # Clear the current route before sending the next goal
+        # (state must be UNSET to accept a new route via set_route_points)
+        self.clear_route_and_send_next_goal()
+
+    def clear_route_and_send_next_goal(self):
+        """Clear the current route, then send the next goal."""
+        self.get_logger().info('Clearing current route before sending next goal...')
+        request = ClearRoute.Request()
+        future = self.clear_route_client.call_async(request)
+        future.add_done_callback(self.clear_route_callback)
+
+    def clear_route_callback(self, future):
+        """Handle the clear_route service response."""
+        try:
+            response = future.result()
+            if response.status.success:
+                self.get_logger().info('Route cleared successfully! Sending next goal...')
+                self.send_current_goal()
+            else:
+                self.get_logger().error(
+                    f'Failed to clear route: {response.status.message}'
+                )
+                # Retry after a short delay
+                self.get_logger().info('Retrying clear_route in 2 seconds...')
+                self.wait_timer = self.create_timer(2.0, self.retry_clear_route)
+        except Exception as e:
+            self.get_logger().error(f'clear_route service call failed: {str(e)}')
+            self.get_logger().info('Retrying clear_route in 2 seconds...')
+            self.wait_timer = self.create_timer(2.0, self.retry_clear_route)
+
+    def retry_clear_route(self):
+        """Retry clearing the route."""
+        if self.wait_timer:
+            self.wait_timer.cancel()
+            self.wait_timer = None
+        self.clear_route_and_send_next_goal()
 
     def send_current_goal(self):
         """Send the current goal in the sequence."""
@@ -191,7 +231,7 @@ class SetGoalNode(Node):
 
     def send_goal(self, x: float, y: float, z: float,
                   ox: float, oy: float, oz: float, ow: float,
-                  frame_id: str = 'map', allow_goal_modification: bool = True):
+                  frame_id: str = 'map', allow_goal_modification: bool = False):
         """
         Send a goal point via the set_route_points service.
 

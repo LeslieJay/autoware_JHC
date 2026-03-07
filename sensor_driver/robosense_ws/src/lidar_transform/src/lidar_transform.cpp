@@ -53,13 +53,12 @@ public:
     RCLCPP_INFO(this->get_logger(), "  TransformZ: %.2f", TransformZ);
 
 
-    // 创建发布者
-    rclcpp::QoS qos(10);
-    qos.reliability(rclcpp::ReliabilityPolicy::Reliable);
+    // 创建发布者 - 使用 SensorDataQoS (Best Effort) 以匹配 Autoware 点云订阅者的 QoS
+    rclcpp::SensorDataQoS sensor_qos;
     pub_filtered_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
-        "/sensing/lidar/top/outlier_filtered/pointcloud", qos);
+        "/sensing/lidar/top/outlier_filtered/pointcloud", sensor_qos);
     pub_concatenated_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
-        "/sensing/lidar/concatenated/pointcloud", qos);
+        "/sensing/lidar/concatenated2/pointcloud", sensor_qos);
 
     // 创建订阅者
     sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(

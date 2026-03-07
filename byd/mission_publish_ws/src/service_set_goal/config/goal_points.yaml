@@ -6,7 +6,7 @@
 set_goal_node:
   ros__parameters:
     frame_id: 'map'
-    allow_goal_modification: true
+    allow_goal_modification: false
     loop: false  # Set to true to loop through goals continuously
 
     # List of goal names (executed in order)
@@ -27,13 +27,15 @@ set_goal_node:
 
       ### 单向-单车道
       # A:
-      #   x: 31.57391929626465
-      #   y: -175.38174438476562
-      #   z: 4.09387811227483
-      #   orientation_x: 0.0
-      #   orientation_y: 0.0
-      #   orientation_z: -0.6907310465020616
-      #   orientation_w: 0.7231117627297781
+        # x: 31.57391929626465
+        # y: -175.38174438476562
+        # z: 4.09387811227483
+        # orientation_x: 0.0
+        # orientation_y: 0.0
+        # orientation_z: -0.6907310465020616
+        # orientation_w: 0.7231117627297781
+        # wait_time: 5.0  # Wait 5 seconds after arriving at A
+
 
       # Goal B configuration
       B:

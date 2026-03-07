@@ -1,13 +1,13 @@
 /**:
   ros__parameters:
-    debug_mode: false
+    debug_mode: false  # 先开启看日志
     rosbag_length: 10.0
     maximum_queue_size: 5
-    timeout_sec: 1.0
+    timeout_sec: 0.5
     is_motion_compensated: false
-    publish_synchronized_pointcloud: true
+    publish_synchronized_pointcloud: false
     keep_input_frame_in_synchronized_pointcloud: true
-    publish_previous_but_late_pointcloud: false
+    publish_previous_but_late_pointcloud: true
     synchronized_pointcloud_postfix: pointcloud
     input_twist_topic_type: twist
     input_topics: [
@@ -17,4 +17,6 @@
                 ]
     output_frame: base_link
     matching_strategy:
-      type: naive
+      type: naive   # naive or advanced
+      # lidar_timestamp_offsets: [0.0, 0.0, 0.0]
+      # lidar_timestamp_noise_window: [0.01, 0.01, 0.01]

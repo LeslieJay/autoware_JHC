@@ -49,9 +49,9 @@ class LiveObstaclePublisher(Node):
         # obj.kinematics.pose_with_covariance.pose.position.z = 3.646
 
         ###### 单向-双车道
-        obj.kinematics.pose_with_covariance.pose.position.x = 13.029806137084961
-        obj.kinematics.pose_with_covariance.pose.position.y = 180.3141632080078
-        obj.kinematics.pose_with_covariance.pose.position.z = 3.646
+        obj.kinematics.pose_with_covariance.pose.position.x = 18.717313766479492
+        obj.kinematics.pose_with_covariance.pose.position.y = 70.5
+        obj.kinematics.pose_with_covariance.pose.position.z = -1.4723860326734166
 
     
         # 严格复制你提供的四元数
@@ -82,7 +82,7 @@ class LiveObstaclePublisher(Node):
         except AttributeError:
             obj.shape.type = 1
             
-        obj.shape.dimensions.x = 2.0    
+        obj.shape.dimensions.x = 5.0    
         obj.shape.dimensions.y = 3.0
         obj.shape.dimensions.z = 2.0
 

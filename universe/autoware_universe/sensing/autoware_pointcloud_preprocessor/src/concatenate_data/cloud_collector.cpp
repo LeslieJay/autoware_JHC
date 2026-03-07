@@ -34,7 +34,7 @@ CloudCollector::CloudCollector(
 : ros2_parent_node_(std::move(ros2_parent_node)),
   combine_cloud_handler_(combine_cloud_handler),
   num_of_clouds_(num_of_clouds),
-  timeout_sec_(timeout_sec),
+  timeout_sec_(timeout_sec),    // 超时时间（秒） 在该时间内未收齐点云，也会强制触发拼接
   debug_mode_(debug_mode)
 {
   status_ = CollectorStatus::Idle;

@@ -410,20 +410,40 @@ bool PidLongitudinalController::isReady(
 trajectory_follower::LongitudinalOutput PidLongitudinalController::run(
   trajectory_follower::InputData const & input_data)
 {
+  // 设置静态变量用于控制打印频率
+  static rclcpp::Time last_print_time = clock_->now();
+  static bool first_call = true;
+
+  // 获取当前时间
+  auto current_time = clock_->now();
+
+  // 计算距离上次打印的时间差（秒）
+  double time_since_last_print = (current_time - last_print_time).seconds();
+
   // set input data
   setTrajectory(input_data.current_trajectory);
   setKinematicState(input_data.current_odometry);
   setCurrentAcceleration(input_data.current_accel);
   setCurrentOperationMode(input_data.current_operation_mode);
 
-  // 打印input_data.current_trajectory.points的信息
   const auto & trajectory_points = input_data.current_trajectory.points;
-  RCLCPP_INFO_THROTTLE(logger_, *clock_, 5000, "Number of [input_data] trajectory points: %zu", trajectory_points.size());
-  for (size_t i = 0; i < trajectory_points.size(); ++i) {
-    const auto & pt = trajectory_points[i];
-    RCLCPP_INFO_THROTTLE(logger_, *clock_, 5000, 
-      "Point[%zu]: x=%.6f, y=%.6f, z=%.6f, velocity=%.6f, acceleration=%.6f",
-      i, pt.pose.position.x, pt.pose.position.y, pt.pose.position.z, pt.longitudinal_velocity_mps, pt.acceleration_mps2);
+  // 每1秒打印一次trajectory_points的信息
+  if (first_call || time_since_last_print >= 1.0) {
+    
+    RCLCPP_INFO(logger_, "=== Trajectory Points (Total: %zu) ===", trajectory_points.size());
+    
+    for (size_t i = 0; i < trajectory_points.size(); ++i) {
+      const auto & pt = trajectory_points[i];
+      RCLCPP_INFO(logger_, 
+        "[%zu] pos(%.3f, %.3f, %.3f) vel=%.3f acc=%.3f",
+        i, pt.pose.position.x, pt.pose.position.y, pt.pose.position.z, 
+        pt.longitudinal_velocity_mps, pt.acceleration_mps2);
+    }
+    RCLCPP_INFO(logger_, "=== End of Trajectory ===");
+
+    // 更新最后打印时间
+    last_print_time = current_time;
+    first_call = false;
   }
 
 
@@ -446,6 +466,7 @@ trajectory_follower::LongitudinalOutput PidLongitudinalController::run(
 
   // calculate control command
   const Motion ctrl_cmd = calcCtrlCmd(control_data);  //   struct Motion { double vel{0.0}; double acc{0.0};};
+  const Motion ctrl_cmd_print = ctrl_cmd;  //   struct Motion { double vel{0.0}; double acc{0.0};};
   RCLCPP_INFO_THROTTLE(logger_, *clock_, 5000, 
   "vel: %.2f,  acc: %.2f",
   ctrl_cmd.vel, ctrl_cmd.acc);

@@ -3,7 +3,7 @@
   <arg name="output" default="/sensing/lidar/concatenated/pointcloud"/>
   <arg name="param_file" default="/media/f/nvme_storage/autoware/src/universe/autoware_universe/sensing/autoware_pointcloud_preprocessor/config/concatenate_and_time_sync_node.param.yaml"/>
 
-  <node_container pkg="rclcpp_components" exec="component_container" name="lidar_processing_container" namespace="">
+  <node_container pkg="rclcpp_components" exec="component_container_mt" name="lidar_processing_container" namespace="">
     
     <composable_node pkg="lidar_transform" plugin="autoware::lidar_transform::LidarTransformNode" name="top_lidar_transform">
       <param name="RadiusOutlierFilter" value="1.5"/>
@@ -51,11 +51,12 @@
       <param name="crop_radius" value="0.8"/>
     </composable_node>
 
-  </node_container>
-  <node pkg="autoware_pointcloud_preprocessor" exec="concatenate_and_time_sync_node" name="concatenate_and_time_sync_node" output="screen">
-    <remap from="~/input/twist" to="$(var input/twist)"/>
-    <remap from="output" to="$(var output)"/>
-    <param from="$(var param_file)"/>
-  </node>
+    <!-- 放进同一个容器，使用零拷贝通信 -->
+    <composable_node pkg="autoware_pointcloud_preprocessor" plugin="autoware::pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent" name="concatenate_and_time_sync_node">
+      <remap from="~/input/twist" to="$(var input/twist)"/>
+      <remap from="output" to="$(var output)"/>
+      <param from="$(var param_file)"/>
+    </composable_node>
 
+  </node_container>
 </launch>
