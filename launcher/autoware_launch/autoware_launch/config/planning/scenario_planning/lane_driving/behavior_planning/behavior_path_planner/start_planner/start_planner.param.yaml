@@ -55,7 +55,7 @@
       prepare_time_before_start: 0.0
       # freespace planner
       freespace_planner:
-        enable_freespace_planner: true
+        enable_freespace_planner: false
         end_pose_search_start_distance: 20.0
         end_pose_search_end_distance: 30.0
         end_pose_search_interval: 2.0
