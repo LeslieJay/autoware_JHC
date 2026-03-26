@@ -6,8 +6,8 @@
 set_goal_node:
   ros__parameters:
     frame_id: 'map'
-    allow_goal_modification: true
-    loop: true  # Set to true to loop through goals continuously
+    allow_goal_modification: false
+    loop: false  # Set to true to loop through goals continuously
 
     # List of goal names (executed in order)
     goal_names: ['A', 'B']

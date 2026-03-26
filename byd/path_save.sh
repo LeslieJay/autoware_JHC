@@ -1,3 +1,11 @@
+###
+ # @Autor: wei.canming
+ # @Version: 1.0
+ # @Date: 2026-03-24 16:45:56
+ # @LastEditors: wei.canming
+ # @LastEditTime: 2026-03-25 11:37:42
+ # @Description: 
+### 
 ros2 topic echo /planning/scenario_planning/lane_driving/behavior_planning/path_with_lane_id --once > path_with_lane_id.log && \
 ros2 topic echo /planning/scenario_planning/lane_driving/behavior_planning/path --once > path.log && \
 ros2 topic echo /planning/scenario_planning/lane_driving/motion_planning/path_smoother/path --once > path_smoother.log && \

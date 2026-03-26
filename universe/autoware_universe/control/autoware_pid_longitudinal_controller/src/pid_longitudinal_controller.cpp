@@ -466,7 +466,7 @@ trajectory_follower::LongitudinalOutput PidLongitudinalController::run(
 
   // calculate control command
   const Motion ctrl_cmd = calcCtrlCmd(control_data);  //   struct Motion { double vel{0.0}; double acc{0.0};};
-  const Motion ctrl_cmd_print = ctrl_cmd;  //   struct Motion { double vel{0.0}; double acc{0.0};};
+  // const Motion ctrl_cmd_print = ctrl_cmd;  //   struct Motion { double vel{0.0}; double acc{0.0};};
   RCLCPP_INFO_THROTTLE(logger_, *clock_, 5000, 
   "vel: %.2f,  acc: %.2f",
   ctrl_cmd.vel, ctrl_cmd.acc);
