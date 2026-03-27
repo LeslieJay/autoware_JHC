@@ -103,7 +103,7 @@ ros2 launch reverse_parking_planner reverse_parking_planner.launch.py
 ```bash
 # 通过 topic 发送目标位姿
 ros2 topic pub /planning/mission_planning/goal geometry_msgs/PoseStamped \
-  "{header: {frame_id: 'map'}, pose: {position: {x: -75.8, y: -123, z: 0.0}, orientation: {w: 1.0}}}"
+  "{header: {frame_id: 'map'}, pose: {position: {x: 0.0, y: 0.0, z: 1.5}, orientation: {w: 1.0}}}"
 
 # 或通过服务触发规划
 ros2 service call /reverse_parking_planner/trigger_planning std_srvs/srv/Trigger
@@ -174,10 +174,60 @@ ros2 service call /reverse_parking_planner/trigger_planning std_srvs/srv/Trigger
 - Reeds, J.A. and Shepp, L.A., "Optimal paths for a car that goes both forwards and backwards", Pacific Journal of Mathematics, 1990
 - [OMPL Reeds-Shepp Implementation](https://ompl.kavrakilab.org/)
 
+## 室内 AGV 倒车充电优化总结（2026-03）
+
+针对室内 AGV 倒车充电对接场景，规划侧做了以下优化：
+
+### 1. 两阶段路径生成（预接近点 + 最终直线倒车）
+
+- 先用 Reeds-Shepp 规划到预接近点。
+- 再拼接固定长度的直线倒车段进入目标位姿。
+- 这样可保证最后一段曲率为 0，提升充电插头对准精度。
+
+新增参数：
+
+- `final_approach_distance`：最终直线倒车接近距离，默认 1.0 m。
+
+### 2. 速度剖面优化（终点减速 + 换向减速 + 蠕行）
+
+- 在终点前 `decel_distance` 范围内平滑减速。
+- 在前进/倒车切换点附近 `transition_decel_distance` 范围内主动减速，降低冲击。
+- 末端限制为低速蠕行 `velocity_creep`，并在终点速度收敛至 0。
+
+新增参数：
+
+- `velocity_creep`：最终接近最小速度，默认 0.05 m/s。
+- `decel_distance`：终点减速区长度，默认 1.5 m。
+- `transition_decel_distance`：换向减速区长度，默认 0.5 m。
+
+### 3. 基于曲率的转角输出
+
+- 路径点增加曲率信息 `curvature`。
+- 轨迹点前轮转角按几何关系计算：
+
+  `delta = atan(wheel_base * curvature)`
+
+- 相比相邻点差分法，更不依赖采样间距，低速倒车时更稳定。
+
+### 4. 室内低速场景参数收敛
+
+- `path_resolution` 从 0.1 m 调整为 0.05 m，末端采样更细。
+- `velocity_forward` 调整为 0.3 m/s。
+- `velocity_reverse` 调整为 -0.2 m/s。
+
+推荐实车调参顺序：
+
+1. 先固定控制参数，仅调 `final_approach_distance` 和 `velocity_creep`。
+2. 再调 `decel_distance` 与 `transition_decel_distance`，抑制换向冲击。
+3. 最后按车体响应微调 `path_resolution` 与基础速度。
+
 # 通过服务设置目标位姿并立即触发规划
 ros2 service call /reverse_parking_planner/set_goal_pose \
   reverse_parking_planner/srv/SetGoalPose \
-  "{goal_pose: {header: {frame_id: 'map'}, pose: {position: {x: -75.8, y: -123, z: 0.0}, orientation: {x: 0.0, y: 0.0, z: -0.6680717263004464, w: 0.7440968811370878}}}}"
+  "{goal_pose: {header: {frame_id: 'map'}, pose: {position: {x: 0.0, y: 0.0, z: 1.5}, orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}}}}"
 
 # 使用已有目标重新规划
 ros2 service call /reverse_parking_planner/trigger_planning std_srvs/srv/Trigger
+
+
+

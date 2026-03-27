@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
   <!-- Essential parameters -->
-  <arg name="map_path" default="/media/f/nvme_storage/autoware_map/num_3-num_8-map" description="point cloud and lanelet2 map directory path"/>
+  <arg name="map_path" default="/media/f/nvme_storage/autoware_map/9_out/" description="point cloud and lanelet2 map directory path"/>
   <arg name="vehicle_model" default="byd_vehicle" description="vehicle model name"/>
   <arg name="sensor_model" default="byd_sensor_kit" description="sensor model name"/>
   <arg name="data_path" default="/media/f/nvme_storage/autoware_data" description="packages data and artifacts directory path"/>

@@ -125,7 +125,6 @@
       fov="1.75"
     />
 
-    <!-- 只保留 imu -->
     <xacro:imu_macro
       name="tamagawa/imu"
       parent="sensor_kit_base_link"

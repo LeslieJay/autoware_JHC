@@ -20,7 +20,12 @@
     <include file="$(find-pkg-share byd_sensor_kit_launch)/launch/imu.launch.xml"/>
 
     <!-- GNSS Driver -->
-    <!-- GNSS Drives in not needed because the AWSIM already publishes both gnss pose and pose with covariance topics -->
+    <!-- geo_pose_projector: subscribes NavSatFix + autoware_orientation, projects WGS84→map, assigns covariance by RTK status code -->
+    <include file="$(find-pkg-share autoware_geo_pose_projector)/launch/geo_pose_projector.launch.xml">
+      <arg name="input_nav_sat_fix" value="/sensing/gnss/rtk/nav_sat_fix"/>
+      <arg name="input_gnss_ins_orientation" value="/autoware_orientation"/>
+      <arg name="output_pose" value="/sensing/gnss/pose_with_covariance"/>
+    </include>
 
     <!-- Vehicle Velocity Converter  -->
     <include file="$(find-pkg-share autoware_vehicle_velocity_converter)/launch/vehicle_velocity_converter.launch.xml">

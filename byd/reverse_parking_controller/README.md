@@ -68,6 +68,43 @@ reverse_parking_planner ──(trajectory)──> reverse_parking_controller ─
 - 根据轨迹点速度方向自动切换 DRIVE/REVERSE 档
 - 到达终点后切换 PARK 档
 
+## 室内 AGV 倒车充电优化总结（2026-03）
+
+针对末端对接精度和低速稳定性，控制侧优化如下：
+
+### 1. 倒车专用前视距离
+
+- 新增 `reverse_lookahead_distance`，倒车时使用更短前视距离。
+- 近距离对接阶段可降低横向跟踪误差。
+
+### 2. 最终接近阶段横向误差修正
+
+- 在 `final_approach_distance` 范围内，叠加 Stanley 风格横向误差修正。
+- 修正增益由 `stanley_gain` 控制，用于增强末端纠偏能力。
+
+### 3. 基于目标距离的速度收敛
+
+- 新增 `calcDistanceToGoal`，按距离目标点的远近调制速度。
+- 在最终接近区内，目标速度逐步下降到 `final_approach_speed` 蠕行值。
+
+### 4. 换向安全保护
+
+- 当检测到前进/倒车方向变化时，若车速仍高于 `stop_velocity_threshold`，
+    先制动再切档，避免机械冲击。
+
+### 5. 充电对接阈值收紧
+
+- `goal_distance_threshold` 调整为 0.05 m。
+- `goal_yaw_threshold` 调整为 0.03 rad。
+- 配合低速接近策略，提升车位对接一致性。
+
+新增参数：
+
+- `reverse_lookahead_distance`：倒车前视距离（默认 0.4 m）
+- `stanley_gain`：横向误差修正增益（默认 1.5）
+- `final_approach_distance`：最终接近距离（默认 1.0 m）
+- `final_approach_speed`：最终接近速度（默认 0.05 m/s）
+
 ## 启动
 
 ```bash

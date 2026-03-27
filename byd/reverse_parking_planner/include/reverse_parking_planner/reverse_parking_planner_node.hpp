@@ -105,6 +105,12 @@ private:
   double velocity_reverse_;
   double publish_rate_;
   bool enable_reverse_only_;
+
+  // AGV充电对接优化参数
+  double final_approach_distance_;    // 最终直线倒车接近距离 [m]
+  double velocity_creep_;             // 蠕行速度（最终接近段最低速度）[m/s]
+  double decel_distance_;             // 终点减速区距离 [m]
+  double transition_decel_distance_;  // 方向切换减速区距离 [m]
 };
 
 }  // namespace reverse_parking_planner

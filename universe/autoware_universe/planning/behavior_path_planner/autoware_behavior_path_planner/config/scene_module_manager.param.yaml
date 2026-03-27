@@ -45,10 +45,10 @@
     #   enable_simultaneous_execution_as_approved_module: true
     #   enable_simultaneous_execution_as_candidate_module: true
 
-    # start_planner:
-    #   enable_rtc: false
-    #   enable_simultaneous_execution_as_approved_module: true
-    #   enable_simultaneous_execution_as_candidate_module: false
+    start_planner:
+      enable_rtc: false
+      enable_simultaneous_execution_as_approved_module: true
+      enable_simultaneous_execution_as_candidate_module: false
 
     # side_shift:
     #   enable_rtc: false

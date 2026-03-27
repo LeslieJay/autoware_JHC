@@ -98,5 +98,11 @@
         "typeinfo": "cpp",
         "valarray": "cpp",
         "variant": "cpp"
+    },
+    "chat.tools.terminal.autoApprove": {
+        "/^python3 << 'EOF'\nimport struct\n\n# 完整扫描PCD获取准确范围\npath = '/media/f/nvme_storage/autoware_map/9_out/pointcloud_map\\.pcd'\nwith open\\(path, 'rb'\\) as f:\n    header_lines = \\[\\]\n    while True:\n        line = f\\.readline\\(\\)\\.decode\\('utf-8', errors='ignore'\\)\\.strip\\(\\)\n        header_lines\\.append\\(line\\)\n        if line\\.startswith\\('DATA'\\):\n            break\n    \n    points_line = \\[l for l in header_lines if l\\.startswith\\('POINTS'\\)\\]\n    num_points = int\\(points_line\\[0\\]\\.split\\(\\)\\[1\\]\\)\n    \n    # 每100个点采样一次\n    xs, ys, zs = \\[\\], \\[\\], \\[\\]\n    data = f\\.read\\(\\)\n    pt_size = 16  # 4 floats\n    \n    for i in range\\(0, num_points, 100\\):\n        offset = i \\* pt_size\n        if offset \\+ pt_size > len\\(data\\):\n            break\n        x, y, z, _ = struct\\.unpack_from\\('ffff', data, offset\\)\n        xs\\.append\\(x\\)\n        ys\\.append\\(y\\)\n        zs\\.append\\(z\\)\n\nprint\\(f\"PCD 完整扫描 \\(每100点采样, 共采\\{len\\(xs\\)\\}个样本\\):\"\\)\nprint\\(f\"X: \\{min\\(xs\\):\\.2f\\} ~ \\{max\\(xs\\):\\.2f\\}  span=\\{max\\(xs\\)-min\\(xs\\):\\.1f\\}m\"\\)\nprint\\(f\"Y: \\{min\\(ys\\):\\.2f\\} ~ \\{max\\(ys\\):\\.2f\\}  span=\\{max\\(ys\\)-min\\(ys\\):\\.1f\\}m\"\\)\nprint\\(f\"Z: \\{min\\(zs\\):\\.2f\\} ~ \\{max\\(zs\\):\\.2f\\}  span=\\{max\\(zs\\)-min\\(zs\\):\\.1f\\}m\"\\)\nprint\\(f\"中心: X=\\{\\( min\\(xs\\)\\+max\\(xs\\)\\)/2:\\.2f\\}, Y=\\{\\(min\\(ys\\)\\+max\\(ys\\)\\)/2:\\.2f\\}\"\\)\nEOF$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
     }
 }

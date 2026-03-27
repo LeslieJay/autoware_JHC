@@ -35,10 +35,11 @@ struct PathPoint
   double x;
   double y;
   double yaw;
+  double curvature{0.0};  // 曲率 [1/m]
   bool is_reverse;  // 是否为倒车段
   
-  PathPoint(double x_ = 0, double y_ = 0, double yaw_ = 0, bool reverse = false)
-    : x(x_), y(y_), yaw(yaw_), is_reverse(reverse) {}
+  PathPoint(double x_ = 0, double y_ = 0, double yaw_ = 0, bool reverse = false, double curv = 0.0)
+    : x(x_), y(y_), yaw(yaw_), curvature(curv), is_reverse(reverse) {}
 };
 
 /**

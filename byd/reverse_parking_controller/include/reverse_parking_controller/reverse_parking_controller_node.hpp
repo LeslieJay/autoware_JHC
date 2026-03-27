@@ -58,7 +58,7 @@ private:
   double calcSteeringAngle(
     const geometry_msgs::msg::Pose & current_pose,
     const autoware_planning_msgs::msg::Trajectory & trajectory,
-    size_t nearest_idx, bool is_reverse) const;
+    size_t lookahead_idx, bool is_reverse) const;
 
   /// PID 纵向控制：计算加速度指令
   double calcAcceleration(double target_velocity, double current_velocity);
@@ -97,6 +97,9 @@ private:
   /// 角度归一化到 [-pi, pi]
   double normalizeAngle(double angle) const;
 
+  /// 计算当前位置到轨迹终点的距离
+  double calcDistanceToGoal(const geometry_msgs::msg::Pose & current_pose) const;
+
   // ---- 订阅者 ----
   rclcpp::Subscription<autoware_planning_msgs::msg::Trajectory>::SharedPtr traj_sub_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
@@ -124,6 +127,7 @@ private:
   nav_msgs::msg::Odometry::ConstSharedPtr current_odom_;
   bool is_goal_reached_{false};
   bool is_active_{false};
+  bool prev_is_reverse_{false};  // 上一拍的行驶方向，用于档位切换安全逻辑
 
   // ---- PID 纵向控制器状态 ----
   double pid_error_integral_{0.0};
@@ -155,6 +159,12 @@ private:
 
   // 转向限幅
   double max_steering_angle_;    // 最大转向角 [rad]
+
+  // AGV充电对接优化参数
+  double reverse_lookahead_distance_;  // 倒车前视距离 [m] (更短以提高精度)
+  double stanley_gain_;                // Stanley横向误差修正增益
+  double final_approach_distance_;     // 最终接近距离 [m]
+  double final_approach_speed_;        // 最终接近速度 [m/s]
 };
 
 }  // namespace reverse_parking_controller

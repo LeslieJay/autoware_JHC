@@ -453,22 +453,6 @@ void VelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstSharedPtr 
   external_velocity_limit_ptr_ = sub_external_velocity_limit_.take_data();
   const auto operation_mode_ptr = sub_operation_mode_.take_data();
   
-  if (current_odometry_ptr_) {
-    RCLCPP_INFO(get_logger(), "Odometry velocity: %.3f", current_odometry_ptr_->twist.twist.linear.x);
-  }
-  if (current_acceleration_ptr_) {
-    RCLCPP_INFO(get_logger(), "Acceleration: %.3f", current_acceleration_ptr_->accel.accel.linear.x);
-  }
-  if (external_velocity_limit_ptr_) {
-    RCLCPP_INFO(get_logger(), "External velocity limit: %.3f", external_velocity_limit_ptr_->max_velocity);
-  }
-  if (operation_mode_ptr) {
-    RCLCPP_INFO(get_logger(), "Operation mode: %d", operation_mode_ptr->mode);
-  }
-  if (operation_mode_ptr) {
-    operation_mode_ = *operation_mode_ptr;
-  }
-
   // guard
   if (!checkData()) {
     RCLCPP_DEBUG(get_logger(), "VelocitySmootherNode: Data check failed");

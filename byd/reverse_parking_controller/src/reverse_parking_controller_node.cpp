@@ -48,6 +48,12 @@ ReverseParkingControllerNode::ReverseParkingControllerNode(const rclcpp::NodeOpt
   // 转向限幅
   max_steering_angle_ = declare_parameter<double>("max_steering_angle", 0.6);
 
+  // AGV充电对接优化参数
+  reverse_lookahead_distance_ = declare_parameter<double>("reverse_lookahead_distance", 0.5);
+  stanley_gain_ = declare_parameter<double>("stanley_gain", 1.5);
+  final_approach_distance_ = declare_parameter<double>("final_approach_distance", 1.0);
+  final_approach_speed_ = declare_parameter<double>("final_approach_speed", 0.1);
+
   // ==================== TF ====================
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(get_clock());
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
@@ -92,6 +98,10 @@ ReverseParkingControllerNode::ReverseParkingControllerNode(const rclcpp::NodeOpt
   RCLCPP_INFO(get_logger(), "  - Lookahead distance: %.2f m", lookahead_distance_);
   RCLCPP_INFO(get_logger(), "  - Wheel base: %.2f m", wheel_base_);
   RCLCPP_INFO(get_logger(), "  - PID gains: kp=%.2f, ki=%.2f, kd=%.2f", kp_, ki_, kd_);
+  RCLCPP_INFO(get_logger(), "  - Reverse lookahead: %.2f m", reverse_lookahead_distance_);
+  RCLCPP_INFO(get_logger(), "  - Stanley gain: %.2f", stanley_gain_);
+  RCLCPP_INFO(get_logger(), "  - Final approach: dist=%.2f m, speed=%.2f m/s",
+              final_approach_distance_, final_approach_speed_);
 }
 
 // ============================================================================
@@ -140,21 +150,62 @@ void ReverseParkingControllerNode::onTimer()
 
   // 判断当前轨迹段是否为倒车（速度为负）
   const bool is_reverse = (nearest_pt.longitudinal_velocity_mps < 0.0);
-  const double target_velocity = nearest_pt.longitudinal_velocity_mps;
+  double target_velocity = nearest_pt.longitudinal_velocity_mps;
 
-  // 计算自适应前视距离
+  // ========= 档位切换安全逻辑 =========
+  // 切换方向前必须先停车，避免变速箱冲击
+  if (is_reverse != prev_is_reverse_ && std::abs(current_velocity) > stop_velocity_threshold_) {
+    publishControlCmd(0.0, max_deceleration_, 0.0);
+    publishGearCmd(prev_is_reverse_);
+    publishIndicatorCmds(prev_is_reverse_, true);
+    return;
+  }
+  prev_is_reverse_ = is_reverse;
+
+  // ========= 基于到终点距离的速度调制 =========
+  // 在最终接近阶段逐步降速，确保安全精确对接
+  const double distance_to_goal = calcDistanceToGoal(current_pose);
+  if (distance_to_goal < final_approach_distance_) {
+    double approach_ratio = distance_to_goal / final_approach_distance_;
+    double max_speed = final_approach_speed_ +
+      approach_ratio * (std::abs(target_velocity) - final_approach_speed_);
+    max_speed = std::max(max_speed, final_approach_speed_);
+    if (std::abs(target_velocity) > max_speed) {
+      target_velocity = is_reverse ? -max_speed : max_speed;
+    }
+  }
+
+  // ========= 自适应前视距离 =========
+  // 倒车时使用更短的前视距离以提高跟踪精度
+  const double base_lookahead = is_reverse ? reverse_lookahead_distance_ : lookahead_distance_;
   const double adaptive_lookahead =
     std::max(min_lookahead_distance_,
              lookahead_ratio_ * std::abs(current_velocity));
-  const double effective_lookahead = std::max(adaptive_lookahead, lookahead_distance_);
+  const double effective_lookahead = std::max(adaptive_lookahead, base_lookahead);
 
   // 找到前视目标点
   const size_t lookahead_idx =
     findLookaheadIndex(current_pose, *current_trajectory_, nearest_idx, effective_lookahead);
 
   // ---- 横向控制：Pure Pursuit 计算转向角 ----
-  const double steering_angle =
+  double steering_angle =
     calcSteeringAngle(current_pose, *current_trajectory_, lookahead_idx, is_reverse);
+
+  // ========= 最终接近横向误差修正（Stanley风格）=========
+  // 在接近充电位时叠加横向偏移修正，提高对接精度
+  if (distance_to_goal < final_approach_distance_) {
+    const double path_yaw = tf2::getYaw(nearest_pt.pose.orientation);
+    const double dx_cte = current_pose.position.x - nearest_pt.pose.position.x;
+    const double dy_cte = current_pose.position.y - nearest_pt.pose.position.y;
+    // 横向误差：车辆偏离路径的垂直距离
+    double cte = -std::sin(path_yaw) * dx_cte + std::cos(path_yaw) * dy_cte;
+    double cte_correction = -stanley_gain_ * cte;
+    if (is_reverse) {
+      cte_correction = -cte_correction;
+    }
+    steering_angle += cte_correction;
+    steering_angle = std::clamp(steering_angle, -max_steering_angle_, max_steering_angle_);
+  }
 
   // ---- 纵向控制：PID 计算加速度 ----
   const double acceleration = calcAcceleration(target_velocity, current_velocity);
@@ -482,6 +533,18 @@ void ReverseParkingControllerNode::publishDebugMarkers(
   }
 
   debug_marker_pub_->publish(markers);
+}
+
+double ReverseParkingControllerNode::calcDistanceToGoal(
+  const geometry_msgs::msg::Pose & current_pose) const
+{
+  if (!current_trajectory_ || current_trajectory_->points.empty()) {
+    return std::numeric_limits<double>::max();
+  }
+  const auto & goal = current_trajectory_->points.back();
+  const double dx = goal.pose.position.x - current_pose.position.x;
+  const double dy = goal.pose.position.y - current_pose.position.y;
+  return std::sqrt(dx * dx + dy * dy);
 }
 
 double ReverseParkingControllerNode::normalizeAngle(double angle) const

@@ -30,6 +30,10 @@ ReverseParkingPlannerNode::ReverseParkingPlannerNode(const rclcpp::NodeOptions &
   velocity_reverse_ = declare_parameter<double>("velocity_reverse", -0.3);
   publish_rate_ = declare_parameter<double>("publish_rate", 10.0);
   enable_reverse_only_ = declare_parameter<bool>("enable_reverse_only", false);
+  final_approach_distance_ = declare_parameter<double>("final_approach_distance", 1.0);
+  velocity_creep_ = declare_parameter<double>("velocity_creep", 0.1);
+  decel_distance_ = declare_parameter<double>("decel_distance", 1.5);
+  transition_decel_distance_ = declare_parameter<double>("transition_decel_distance", 0.5);
   
   // 初始化规划器
   planner_ = std::make_unique<ReedsSheppPlanner>(min_turning_radius_);
@@ -73,6 +77,9 @@ ReverseParkingPlannerNode::ReverseParkingPlannerNode(const rclcpp::NodeOptions &
   RCLCPP_INFO(get_logger(), "  - Path resolution: %.2f m", path_resolution_);
   RCLCPP_INFO(get_logger(), "  - Forward velocity: %.2f m/s", velocity_forward_);
   RCLCPP_INFO(get_logger(), "  - Reverse velocity: %.2f m/s", velocity_reverse_);
+  RCLCPP_INFO(get_logger(), "  - Final approach distance: %.2f m", final_approach_distance_);
+  RCLCPP_INFO(get_logger(), "  - Decel distance: %.2f m", decel_distance_);
+  RCLCPP_INFO(get_logger(), "  - Creep velocity: %.2f m/s", velocity_creep_);
 }
 
 void ReverseParkingPlannerNode::onTimer()
@@ -166,42 +173,83 @@ bool ReverseParkingPlannerNode::planPath()
   double yaw0 = tf2::getYaw(current_odom_->pose.pose.orientation);
   
   // 获取目标位姿
-  double x1 = goal_pose_.pose.position.x;
-  double y1 = goal_pose_.pose.position.y;
-  double yaw1 = tf2::getYaw(goal_pose_.pose.orientation);
+  double xg = goal_pose_.pose.position.x;
+  double yg = goal_pose_.pose.position.y;
+  double yawg = tf2::getYaw(goal_pose_.pose.orientation);
   
   RCLCPP_INFO(get_logger(), "Planning from (%.2f, %.2f, %.2f) to (%.2f, %.2f, %.2f)",
-              x0, y0, yaw0, x1, y1, yaw1);
+              x0, y0, yaw0, xg, yg, yawg);
   
-  // 计算Reeds-Shepp路径
-  ReedsSheppPath rs_path = planner_->planPath(x0, y0, yaw0, x1, y1, yaw1);
+  std::vector<PathPoint> path_points;
   
-  if (!rs_path.valid()) {
-    RCLCPP_ERROR(get_logger(), "No valid Reeds-Shepp path found");
-    return false;
-  }
-  
-  RCLCPP_INFO(get_logger(), "Reeds-Shepp path length: %.2f m", 
-              rs_path.length() * min_turning_radius_);
-  
-  // 采样路径点
-  current_path_ = planner_->samplePath(rs_path, x0, y0, yaw0, path_resolution_);
-  
-  // 输出路径段信息
-  int reverse_count = 0;
-  int forward_count = 0;
-  for (const auto& pt : current_path_) {
-    if (pt.is_reverse) {
-      reverse_count++;
+  // ========= 带最终直线倒车接近段的规划（充电对接关键优化）=========
+  // 设计思路：先通过 Reeds-Shepp 到达“预接近点”，然后由预接近点直线倒车进入充电位
+  // 这保证了最后一段始终是直线倒车，确保充电插头精确对准
+  if (final_approach_distance_ > path_resolution_) {
+    // 预接近点：在目标前方（沿目标朝向）偏移 final_approach_distance_
+    // 车辆将先到达此点，再直线倒车进入充电位
+    double x_pre = xg + final_approach_distance_ * std::cos(yawg);
+    double y_pre = yg + final_approach_distance_ * std::sin(yawg);
+    
+    RCLCPP_INFO(get_logger(), "Pre-approach point: (%.2f, %.2f), approach distance: %.2f m",
+                x_pre, y_pre, final_approach_distance_);
+    
+    ReedsSheppPath rs_path = planner_->planPath(x0, y0, yaw0, x_pre, y_pre, yawg);
+    
+    if (rs_path.valid()) {
+      path_points = planner_->samplePath(rs_path, x0, y0, yaw0, path_resolution_);
+      
+      // 添加最终直线倒车接近段
+      int approach_steps = static_cast<int>(std::ceil(final_approach_distance_ / path_resolution_));
+      for (int i = 1; i <= approach_steps; ++i) {
+        double t = static_cast<double>(i) / approach_steps;
+        double px = x_pre + t * (xg - x_pre);
+        double py = y_pre + t * (yg - y_pre);
+        path_points.emplace_back(px, py, yawg, true, 0.0);  // 直线倒车, 曲率=0
+      }
+      
+      RCLCPP_INFO(get_logger(), "Path with final approach: RS=%zu + approach=%d points",
+                  path_points.size() - approach_steps, approach_steps);
     } else {
-      forward_count++;
+      RCLCPP_WARN(get_logger(), "Failed to plan to pre-approach point, trying direct path");
     }
   }
   
-  RCLCPP_INFO(get_logger(), "Path segments: %d forward, %d reverse points",
-              forward_count, reverse_count);
+  // 回退：直接规划到目标
+  if (path_points.empty()) {
+    ReedsSheppPath rs_path = planner_->planPath(x0, y0, yaw0, xg, yg, yawg);
+    if (!rs_path.valid()) {
+      RCLCPP_ERROR(get_logger(), "No valid Reeds-Shepp path found");
+      return false;
+    }
+    RCLCPP_INFO(get_logger(), "Reeds-Shepp path length: %.2f m",
+                rs_path.length() * min_turning_radius_);
+    path_points = planner_->samplePath(rs_path, x0, y0, yaw0, path_resolution_);
+  }
   
-  return !current_path_.empty();
+  if (path_points.empty()) {
+    return false;
+  }
+  
+  // 统计前进/倒车段
+  int reverse_count = 0, forward_count = 0;
+  for (const auto& pt : path_points) {
+    if (pt.is_reverse) reverse_count++;
+    else forward_count++;
+  }
+  
+  if (enable_reverse_only_ && forward_count > 0) {
+    RCLCPP_WARN(get_logger(),
+      "enable_reverse_only is set but path contains %d forward points. "
+      "Consider repositioning the vehicle for a pure-reverse approach.", forward_count);
+  }
+  
+  current_path_ = path_points;
+  
+  RCLCPP_INFO(get_logger(), "Path planned: %zu points (%d forward, %d reverse)",
+              current_path_.size(), forward_count, reverse_count);
+  
+  return true;
 }
 
 autoware_planning_msgs::msg::Trajectory ReverseParkingPlannerNode::convertToTrajectory(
@@ -211,7 +259,28 @@ autoware_planning_msgs::msg::Trajectory ReverseParkingPlannerNode::convertToTraj
   trajectory.header.stamp = now();
   trajectory.header.frame_id = "map";
   
-  for (size_t i = 0; i < path_points.size(); ++i) {
+  if (path_points.empty()) return trajectory;
+  
+  const size_t n = path_points.size();
+  
+  // 预计算累计距离（用于速度规划）
+  std::vector<double> cumulative_dist(n, 0.0);
+  for (size_t i = 1; i < n; ++i) {
+    double dx = path_points[i].x - path_points[i-1].x;
+    double dy = path_points[i].y - path_points[i-1].y;
+    cumulative_dist[i] = cumulative_dist[i-1] + std::sqrt(dx*dx + dy*dy);
+  }
+  double total_dist = cumulative_dist.back();
+  
+  // 检测方向变化点（前进↔倒车切换处）
+  std::vector<double> direction_change_dists;
+  for (size_t i = 1; i < n; ++i) {
+    if (path_points[i].is_reverse != path_points[i-1].is_reverse) {
+      direction_change_dists.push_back(cumulative_dist[i]);
+    }
+  }
+  
+  for (size_t i = 0; i < n; ++i) {
     const auto& pt = path_points[i];
     
     autoware_planning_msgs::msg::TrajectoryPoint traj_pt;
@@ -223,31 +292,46 @@ autoware_planning_msgs::msg::Trajectory ReverseParkingPlannerNode::convertToTraj
     q.setRPY(0, 0, pt.yaw);
     traj_pt.pose.orientation = tf2::toMsg(q);
     
-    // 根据是否倒车设置速度（负值表示倒车）
-    traj_pt.longitudinal_velocity_mps = pt.is_reverse ? velocity_reverse_ : velocity_forward_;
+    // ========= 梯形速度规划 =========
+    double base_velocity = pt.is_reverse ? velocity_reverse_ : velocity_forward_;
+    double velocity_scale = 1.0;
     
-    // 最后几个点减速到0
-    if (i >= path_points.size() - 5) {
-      double ratio = static_cast<double>(path_points.size() - 1 - i) / 5.0;
-      traj_pt.longitudinal_velocity_mps *= ratio;
+    double dist_to_end = total_dist - cumulative_dist[i];
+    
+    // 1. 终点减速区：在 decel_distance_ 范围内平滑减速
+    //    使用平方根曲线实现更平滑的减速过渡
+    if (dist_to_end < decel_distance_ && decel_distance_ > 0.0) {
+      double ratio = dist_to_end / decel_distance_;
+      double creep_ratio = (base_velocity != 0.0) ?
+        std::abs(velocity_creep_ / base_velocity) : 0.0;
+      double goal_scale = creep_ratio + (1.0 - creep_ratio) * std::sqrt(ratio);
+      velocity_scale = std::min(velocity_scale, goal_scale);
     }
     
+    // 2. 方向切换减速区：在换向点附近线性减速到0
+    //    避免倒车↔前进切换时的冲击
+    for (double cd : direction_change_dists) {
+      double dist_to_change = std::abs(cumulative_dist[i] - cd);
+      if (dist_to_change < transition_decel_distance_ && transition_decel_distance_ > 0.0) {
+        double trans_scale = dist_to_change / transition_decel_distance_;
+        velocity_scale = std::min(velocity_scale, trans_scale);
+      }
+    }
+    
+    // 3. 终点速度为0
+    if (i == n - 1) {
+      velocity_scale = 0.0;
+    }
+    
+    traj_pt.longitudinal_velocity_mps = base_velocity * velocity_scale;
     traj_pt.lateral_velocity_mps = 0.0;
     traj_pt.acceleration_mps2 = 0.0;
     traj_pt.heading_rate_rps = 0.0;
     
-    // 计算前轮转角（简化计算）
-    if (i + 1 < path_points.size()) {
-      double dx = path_points[i + 1].x - pt.x;
-      double dy = path_points[i + 1].y - pt.y;
-      double path_yaw = std::atan2(dy, dx);
-      double yaw_diff = normalizeAngle(path_yaw - pt.yaw);
-      // 简化的转向角计算
-      traj_pt.front_wheel_angle_rad = std::atan(2.0 * wheel_base_ * std::sin(yaw_diff) / 
-                                                 std::max(std::sqrt(dx*dx + dy*dy), 0.01));
-    } else {
-      traj_pt.front_wheel_angle_rad = 0.0;
-    }
+    // 使用曲率计算前轮转角：δ = atan(L * κ)
+    // 相比原来的简化计算，基于曲率的方法更精确，不受采样率影响
+    traj_pt.front_wheel_angle_rad = static_cast<float>(
+      std::atan(wheel_base_ * pt.curvature));
     
     trajectory.points.push_back(traj_pt);
   }

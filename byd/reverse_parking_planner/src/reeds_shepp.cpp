@@ -343,6 +343,7 @@ PathPoint ReedsSheppPlanner::interpolate(double x0, double y0, double yaw0,
   double y = y0;
   double yaw = yaw0;
   bool is_reverse = false;
+  double curvature = 0.0;
   
   double seg = s / turning_radius_;  // 归一化
   
@@ -350,10 +351,19 @@ PathPoint ReedsSheppPlanner::interpolate(double x0, double y0, double yaw0,
     double len = path.lengths_[i];
     double abs_len = std::abs(len);
     
+    // 计算当前段的几何曲率
+    double seg_curvature = 0.0;
+    if (path.types_[i] == SegmentType::LEFT) {
+      seg_curvature = 1.0 / turning_radius_;
+    } else if (path.types_[i] == SegmentType::RIGHT) {
+      seg_curvature = -1.0 / turning_radius_;
+    }
+    
     if (seg <= abs_len) {
       // 在当前段内
       double d = (len >= 0) ? seg : -seg;
       is_reverse = (len < 0);
+      curvature = seg_curvature;
       
       switch (path.types_[i]) {
         case SegmentType::LEFT:
@@ -373,12 +383,13 @@ PathPoint ReedsSheppPlanner::interpolate(double x0, double y0, double yaw0,
         default:
           break;
       }
-      return PathPoint(x, y, yaw, is_reverse);
+      return PathPoint(x, y, yaw, is_reverse, curvature);
     }
     
     // 完成当前段
     double d = len;
     is_reverse = (len < 0);
+    curvature = seg_curvature;
     
     switch (path.types_[i]) {
       case SegmentType::LEFT:
@@ -402,7 +413,7 @@ PathPoint ReedsSheppPlanner::interpolate(double x0, double y0, double yaw0,
     seg -= abs_len;
   }
   
-  return PathPoint(x, y, yaw, is_reverse);
+  return PathPoint(x, y, yaw, is_reverse, curvature);
 }
 
 std::vector<PathPoint> ReedsSheppPlanner::samplePath(const ReedsSheppPath& path,
