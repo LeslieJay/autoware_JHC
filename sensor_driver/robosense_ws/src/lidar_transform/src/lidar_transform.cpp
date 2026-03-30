@@ -58,7 +58,7 @@ public:
     pub_filtered_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
         "/sensing/lidar/top/outlier_filtered/pointcloud", sensor_qos);
     pub_concatenated_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
-        "/sensing/lidar/concatenated2/pointcloud", sensor_qos);
+        "/sensing/lidar/concatenated/pointcloud", sensor_qos);
 
     // 创建订阅者
     sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(

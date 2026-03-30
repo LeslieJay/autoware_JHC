@@ -427,24 +427,7 @@ trajectory_follower::LongitudinalOutput PidLongitudinalController::run(
   setCurrentOperationMode(input_data.current_operation_mode);
 
   const auto & trajectory_points = input_data.current_trajectory.points;
-  // 每1秒打印一次trajectory_points的信息
-  if (first_call || time_since_last_print >= 1.0) {
-    
-    RCLCPP_INFO(logger_, "=== Trajectory Points (Total: %zu) ===", trajectory_points.size());
-    
-    for (size_t i = 0; i < trajectory_points.size(); ++i) {
-      const auto & pt = trajectory_points[i];
-      RCLCPP_INFO(logger_, 
-        "[%zu] pos(%.3f, %.3f, %.3f) vel=%.3f acc=%.3f",
-        i, pt.pose.position.x, pt.pose.position.y, pt.pose.position.z, 
-        pt.longitudinal_velocity_mps, pt.acceleration_mps2);
-    }
-    RCLCPP_INFO(logger_, "=== End of Trajectory ===");
 
-    // 更新最后打印时间
-    last_print_time = current_time;
-    first_call = false;
-  }
 
 
   // calculate current pose and control data
@@ -452,14 +435,14 @@ trajectory_follower::LongitudinalOutput PidLongitudinalController::run(
 
   const auto control_data = getControlData(current_pose); // control_data == autoware_planning_msgs::msg::Trajectory
   
-  const auto & control_data_traj_points = control_data.interpolated_traj.points;
-  RCLCPP_INFO_THROTTLE(logger_, *clock_, 5000,  "Number of [control_data] trajectory points: %zu", control_data_traj_points.size());
-  for (size_t i = 0; i < control_data_traj_points.size(); ++i) {
-    const auto & pt = control_data_traj_points[i];
-    RCLCPP_INFO_THROTTLE(logger_, *clock_, 5000, 
-      "Point[%zu]: x=%.6f, y=%.6f, z=%.6f, velocity=%.6f, acceleration=%.6f",
-      i, pt.pose.position.x, pt.pose.position.y, pt.pose.position.z, pt.longitudinal_velocity_mps, pt.acceleration_mps2);
-  }
+  // const auto & control_data_traj_points = control_data.interpolated_traj.points;
+  // RCLCPP_INFO_THROTTLE(logger_, *clock_, 5000,  "Number of [control_data] trajectory points: %zu", control_data_traj_points.size());
+  // for (size_t i = 0; i < control_data_traj_points.size(); ++i) {
+  //   const auto & pt = control_data_traj_points[i];
+  //   RCLCPP_INFO_THROTTLE(logger_, *clock_, 5000, 
+  //     "Point[%zu]: x=%.6f, y=%.6f, z=%.6f, velocity=%.6f, acceleration=%.6f",
+  //     i, pt.pose.position.x, pt.pose.position.y, pt.pose.position.z, pt.longitudinal_velocity_mps, pt.acceleration_mps2);
+  // }
 
   // update control state
   updateControlState(control_data);
@@ -467,9 +450,9 @@ trajectory_follower::LongitudinalOutput PidLongitudinalController::run(
   // calculate control command
   const Motion ctrl_cmd = calcCtrlCmd(control_data);  //   struct Motion { double vel{0.0}; double acc{0.0};};
   // const Motion ctrl_cmd_print = ctrl_cmd;  //   struct Motion { double vel{0.0}; double acc{0.0};};
-  RCLCPP_INFO_THROTTLE(logger_, *clock_, 5000, 
-  "vel: %.2f,  acc: %.2f",
-  ctrl_cmd.vel, ctrl_cmd.acc);
+  // RCLCPP_INFO_THROTTLE(logger_, *clock_, 5000, 
+  // "vel: %.2f,  acc: %.2f",
+  // ctrl_cmd.vel, ctrl_cmd.acc);
 
   // create control command
   const auto cmd_msg = createCtrlCmdMsg(ctrl_cmd, control_data.current_motion.vel);
@@ -485,10 +468,10 @@ trajectory_follower::LongitudinalOutput PidLongitudinalController::run(
   */
   output.control_cmd = cmd_msg;
 
-  RCLCPP_INFO_THROTTLE(logger_, *clock_, 5000, 
-    "Control command after function {createCtrlCmdMsg}: velocity=%.6f, acceleration=%.6f, jerk=%.6f, is_defined_accel=%d, is_defined_jerk=%d",
-    output.control_cmd.velocity, output.control_cmd.acceleration, output.control_cmd.jerk,
-    output.control_cmd.is_defined_acceleration, output.control_cmd.is_defined_jerk);
+  // RCLCPP_INFO_THROTTLE(logger_, *clock_, 5000, 
+  //   "Control command after function {createCtrlCmdMsg}: velocity=%.6f, acceleration=%.6f, jerk=%.6f, is_defined_accel=%d, is_defined_jerk=%d",
+  //   output.control_cmd.velocity, output.control_cmd.acceleration, output.control_cmd.jerk,
+  //   output.control_cmd.is_defined_acceleration, output.control_cmd.is_defined_jerk);
 
   // create control command horizon
   output.control_cmd_horizon.controls.push_back(cmd_msg);
@@ -499,6 +482,110 @@ trajectory_follower::LongitudinalOutput PidLongitudinalController::run(
 
   // diagnostic
   diag_updater_->force_update();
+
+    // 每1秒打印一次trajectory_points的信息
+  if (first_call || time_since_last_print >= 1.0) {
+    
+    // ============================================================
+    // 完整速度计算链路打印
+    // ============================================================
+    const auto & dbg = m_debug_values.getValues();
+    const auto & near_pt = control_data.interpolated_traj.points.at(control_data.nearest_idx);
+    const auto & tgt_pt  = control_data.interpolated_traj.points.at(control_data.target_idx);
+
+    RCLCPP_INFO(logger_, " ");
+    RCLCPP_INFO(logger_, "╔══════════════ 速度计算完整链路 ══════════════╗");
+
+    // Step 1: 规划模块输入轨迹（velocity_smoother 输出）
+    RCLCPP_INFO(logger_, "║ [Step 1] 规划轨迹输入 (velocity_smoother → PID)");
+    RCLCPP_INFO(logger_, "║   轨迹点总数: %zu", trajectory_points.size());
+    if (!trajectory_points.empty()) {
+      RCLCPP_INFO(logger_, "║   首点: vel=%.3f m/s, acc=%.3f m/s²",
+        trajectory_points.front().longitudinal_velocity_mps,
+        trajectory_points.front().acceleration_mps2);
+      RCLCPP_INFO(logger_, "║   末点: vel=%.3f m/s, acc=%.3f m/s²",
+        trajectory_points.back().longitudinal_velocity_mps,
+        trajectory_points.back().acceleration_mps2);
+    }
+
+    // Step 2: 当前车辆状态（EKF 输出）
+    RCLCPP_INFO(logger_, "║ [Step 2] 当前车辆状态 (EKF /localization/kinematic_state)");
+    RCLCPP_INFO(logger_, "║   当前速度=%.3f m/s, 当前加速度=%.3f m/s²",
+      control_data.current_motion.vel, control_data.current_motion.acc);
+    RCLCPP_INFO(logger_, "║   到停车线距离=%.3f m, 控制状态=%d (0=DRIVE,1=STOPPING,2=STOPPED,3=EMERGENCY)",
+      control_data.stop_dist, static_cast<int>(m_control_state));
+
+    // Step 3: 最近点与目标点（延迟补偿）
+    RCLCPP_INFO(logger_, "║ [Step 3] 最近点 & 延迟补偿目标点 (delay=%.3f s)", m_delay_compensation_time);
+    RCLCPP_INFO(logger_, "║   nearest[%zu]: vel=%.3f m/s, acc=%.3f m/s²",
+      control_data.nearest_idx,
+      near_pt.longitudinal_velocity_mps, near_pt.acceleration_mps2);
+    RCLCPP_INFO(logger_, "║   target [%zu]: vel=%.3f m/s, acc=%.3f m/s²  ← PID跟踪目标",
+      control_data.target_idx,
+      tgt_pt.longitudinal_velocity_mps, tgt_pt.acceleration_mps2);
+    RCLCPP_INFO(logger_, "║   预测延迟后速度=%.3f m/s, 行驶距离=%.3f m",
+      control_data.state_after_delay.vel, control_data.state_after_delay.running_distance);
+
+    // Step 4: 速度误差
+    RCLCPP_INFO(logger_, "║ [Step 4] 速度误差");
+    RCLCPP_INFO(logger_, "║   原始误差=(%.3f - %.3f)=%.3f m/s",
+      tgt_pt.longitudinal_velocity_mps, control_data.current_motion.vel,
+      tgt_pt.longitudinal_velocity_mps - control_data.current_motion.vel);
+    RCLCPP_INFO(logger_, "║   LPF滤波后误差=%.3f m/s",
+      dbg[static_cast<int>(DebugValues::TYPE::ERROR_VEL_FILTERED)]);
+
+    // Step 5: FF + PID 加速度
+    RCLCPP_INFO(logger_, "║ [Step 5] FF + PID 加速度计算");
+    RCLCPP_INFO(logger_, "║   FF缩放系数=%.3f (|v_curr|/|v_tgt|, 限幅[0.5,2.0])",
+      dbg[static_cast<int>(DebugValues::TYPE::FF_SCALE)]);
+    RCLCPP_INFO(logger_, "║   FF加速度=%.3f m/s²  (轨迹acc × ff_scale)",
+      dbg[static_cast<int>(DebugValues::TYPE::ACC_CMD_FF)]);
+    RCLCPP_INFO(logger_, "║   PID: P=%.3f, I=%.3f, D=%.3f  → PID合计=%.3f m/s²",
+      dbg[static_cast<int>(DebugValues::TYPE::ACC_CMD_FB_P_CONTRIBUTION)],
+      dbg[static_cast<int>(DebugValues::TYPE::ACC_CMD_FB_I_CONTRIBUTION)],
+      dbg[static_cast<int>(DebugValues::TYPE::ACC_CMD_FB_D_CONTRIBUTION)],
+      dbg[static_cast<int>(DebugValues::TYPE::ACC_CMD_PID_APPLIED)] -
+        dbg[static_cast<int>(DebugValues::TYPE::ACC_CMD_FF)]);
+    RCLCPP_INFO(logger_, "║   FF+PID合计=%.3f m/s²",
+      dbg[static_cast<int>(DebugValues::TYPE::ACC_CMD_PID_APPLIED)]);
+
+    // Step 6: 限幅
+    RCLCPP_INFO(logger_, "║ [Step 6] 加速度限幅");
+    RCLCPP_INFO(logger_, "║   abs限幅[%.2f~%.2f]后=%.3f m/s²",
+      m_min_acc, m_max_acc,
+      dbg[static_cast<int>(DebugValues::TYPE::ACC_CMD_ACC_LIMITED)]);
+    RCLCPP_INFO(logger_, "║   jerk限幅[%.2f~%.2f]后=%.3f m/s²",
+      m_min_jerk, m_max_jerk,
+      dbg[static_cast<int>(DebugValues::TYPE::ACC_CMD_JERK_LIMITED)]);
+
+    // Step 7: 加速度反馈修正
+    RCLCPP_INFO(logger_, "║ [Step 7] 加速度反馈修正");
+    RCLCPP_INFO(logger_, "║   实际acc误差=%.3f m/s², 滤波后=%.3f m/s²",
+      dbg[static_cast<int>(DebugValues::TYPE::ERROR_ACC)],
+      dbg[static_cast<int>(DebugValues::TYPE::ERROR_ACC_FILTERED)]);
+    RCLCPP_INFO(logger_, "║   acc反馈修正后=%.3f m/s²",
+      dbg[static_cast<int>(DebugValues::TYPE::ACC_CMD_ACC_FB_APPLIED)]);
+
+    // Step 8: 坡度补偿
+    RCLCPP_INFO(logger_, "║ [Step 8] 坡度补偿");
+    RCLCPP_INFO(logger_, "║   坡度角=%.4f rad (%.2f°), 补偿量=+%.3f m/s²",
+      control_data.slope_angle, control_data.slope_angle * 180.0 / M_PI,
+      dbg[static_cast<int>(DebugValues::TYPE::ACC_CMD_SLOPE_APPLIED)] -
+        dbg[static_cast<int>(DebugValues::TYPE::ACC_CMD_ACC_FB_APPLIED)]);
+    RCLCPP_INFO(logger_, "║   坡度补偿后=%.3f m/s²",
+      dbg[static_cast<int>(DebugValues::TYPE::ACC_CMD_SLOPE_APPLIED)]);
+
+    // Step 9: 最终输出指令
+    RCLCPP_INFO(logger_, "║ [Step 9] 最终发布指令 → /control/command/control_cmd");
+    RCLCPP_INFO(logger_, "║   速度指令=%.3f m/s", output.control_cmd.velocity);
+    RCLCPP_INFO(logger_, "║   加速度指令=%.3f m/s²", output.control_cmd.acceleration);
+    RCLCPP_INFO(logger_, "╚═══════════════════════════════════════════════╝");
+    RCLCPP_INFO(logger_, " ");
+
+    // 更新最后打印时间
+    last_print_time = current_time;
+    first_call = false;
+  }
 
   return output;
 }

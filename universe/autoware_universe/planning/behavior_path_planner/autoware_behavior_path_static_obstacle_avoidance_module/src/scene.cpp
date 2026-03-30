@@ -30,7 +30,6 @@
 #include <autoware_utils/system/time_keeper.hpp>
 #include <autoware/object_recognition_utils/object_classification.hpp>
 
-#include <algorit
 #include <limits>
 #include <memory>
 #include <optional>
@@ -102,7 +101,7 @@ StaticObstacleAvoidanceModule::StaticObstacleAvoidanceModule(
 bool StaticObstacleAvoidanceModule::isExecutionRequested() const
 {
   RCLCPP_INFO_THROTTLE(
-    getLogger(), *clock_, 1000,
+    getLogger(), *clock_, 3000,
     "[DEBUG] StaticObstacleAvoidanceModule isExecutionRequested");
   // 更新信息和调试标记
   updateInfoMarker(avoid_data_);
@@ -111,7 +110,7 @@ bool StaticObstacleAvoidanceModule::isExecutionRequested() const
   // 如果有需要停车的目标障碍物，直接请求执行
   if (!!avoid_data_.stop_target_object) {
     RCLCPP_INFO_THROTTLE(
-      getLogger(), *clock_, 1000,
+      getLogger(), *clock_, 3000,
       "[DEBUG] isExecutionRequested: TRUE - Found stop_target_object (ID: %s)",
       to_hex_string(avoid_data_.stop_target_object->object.object_id).c_str());
     return true;
@@ -120,7 +119,7 @@ bool StaticObstacleAvoidanceModule::isExecutionRequested() const
   // 如果新的偏移线为空，不需要执行
   if (avoid_data_.new_shift_line.empty()) {
     RCLCPP_INFO_THROTTLE(
-      getLogger(), *clock_, 1000,
+      getLogger(), *clock_, 3000,
       "[DEBUG] isExecutionRequested: FALSE - new_shift_line is empty (target_objects count: %zu)",
       avoid_data_.target_objects.size());
     return false;
@@ -132,7 +131,7 @@ bool StaticObstacleAvoidanceModule::isExecutionRequested() const
     [this](const auto & o) { return !helper_->isAbsolutelyNotAvoidable(o); });
 
   RCLCPP_INFO_THROTTLE(
-    getLogger(), *clock_, 1000,
+    getLogger(), *clock_, 3000,
     "[DEBUG] isExecutionRequested: %s - has_avoidable_object=%s, target_objects=%zu, "
     "new_shift_line=%zu",
     has_avoidable_object ? "TRUE" : "FALSE", has_avoidable_object ? "true" : "false",
@@ -165,11 +164,11 @@ bool StaticObstacleAvoidanceModule::isExecutionReady() const
 
   const bool is_ready = avoid_data_.safe && avoid_data_.comfortable && avoid_data_.valid && avoid_data_.ready;
   // 添加打印输出进入了函数
-  RCLCPP_INFO_THROTTLE(getLogger(), *clock_, 1000, "[DEBUG] Entered isExecutionReady function");
+  RCLCPP_INFO_THROTTLE(getLogger(), *clock_, 3000, "[DEBUG] Entered isExecutionReady function");
 
   if (!is_ready) {
     RCLCPP_WARN_THROTTLE(
-      getLogger(), *clock_, 2000,
+      getLogger(), *clock_, 3000,
       "[DEBUG] isExecutionReady: FALSE - Cannot execute avoidance. "
       "Reasons: SAFE=%s, COMFORTABLE=%s, VALID=%s, READY=%s",
       avoid_data_.safe ? "OK" : "FAIL", avoid_data_.comfortable ? "OK" : "FAIL",
@@ -518,7 +517,7 @@ bool StaticObstacleAvoidanceModule::canYieldManeuver(const AvoidancePlanningData
   // transit yield maneuver only when the avoidance maneuver is not initiated.
   if (helper_->isShifted()) {
     RCLCPP_INFO_THROTTLE(
-      getLogger(), *clock_, 1000,
+      getLogger(), *clock_, 3000,
       "[DEBUG] canYieldManeuver: FALSE - Avoidance maneuver already initiated (isShifted=true)");
     return false;
   }
@@ -531,7 +530,7 @@ bool StaticObstacleAvoidanceModule::canYieldManeuver(const AvoidancePlanningData
       path_shifter_.getReferencePath().points, idx, registered_lines.front().start_idx);
     if (!helper_->isEnoughPrepareDistance(prepare_distance)) {
       RCLCPP_INFO_THROTTLE(
-        getLogger(), *clock_, 1000,
+        getLogger(), *clock_, 3000,
         "[DEBUG] canYieldManeuver: FALSE - Insufficient prepare distance (prepare_distance=%.2f)",
         prepare_distance);
       return false;
@@ -540,7 +539,7 @@ bool StaticObstacleAvoidanceModule::canYieldManeuver(const AvoidancePlanningData
 
   if (!data.stop_target_object) {
     RCLCPP_INFO_THROTTLE(
-      getLogger(), *clock_, 1000,
+      getLogger(), *clock_, 3000,
       "[DEBUG] canYieldManeuver: TRUE - Can pass by object safely without avoidance maneuver");
     return true;
   }
@@ -623,7 +622,7 @@ void StaticObstacleAvoidanceModule::fillShiftLine(
   data.ready = true;
   data.request_operator = false;
   RCLCPP_INFO_THROTTLE(
-    getLogger(), *clock_, 1000,
+    getLogger(), *clock_, 3000,
     "[DEBUG] fillShiftLine: new_shift_line=%zu, valid=%s, comfortable=%s, safe=%s, ready=%s, "
     "request_operator=%s, target_objects=%zu",
     data.new_shift_line.size(), data.valid ? "true" : "false",
@@ -633,22 +632,22 @@ void StaticObstacleAvoidanceModule::fillShiftLine(
 
   if (!data.safe) {
     RCLCPP_WARN_THROTTLE(
-      getLogger(), *clock_, 2000,
+      getLogger(), *clock_, 3000,
       "[DEBUG] fillShiftLine: Path is NOT SAFE - This may cause vehicle to stop instead of avoid");
   }
   if (!data.comfortable) {
     RCLCPP_WARN_THROTTLE(
-      getLogger(), *clock_, 2000,
+      getLogger(), *clock_, 3000,
       "[DEBUG] fillShiftLine: Path is NOT COMFORTABLE - Shift may be too aggressive");
   }
   if (!data.valid) {
     RCLCPP_WARN_THROTTLE(
-      getLogger(), *clock_, 2000,
+      getLogger(), *clock_, 3000,
       "[DEBUG] fillShiftLine: Path is NOT VALID - Shift line validation failed");
   }
   if (!data.ready) {
     RCLCPP_WARN_THROTTLE(
-      getLogger(), *clock_, 2000,
+      getLogger(), *clock_, 3000,
       "[DEBUG] fillShiftLine: Path is NOT READY - Not ready for avoidance execution");
   }
 }
@@ -691,7 +690,7 @@ void StaticObstacleAvoidanceModule::fillEgoStatus(
       data.stop_target_object = o;
       data.to_stop_line = o.to_stop_line;
       RCLCPP_INFO_THROTTLE(
-        getLogger(), *clock_, 1000,
+        getLogger(), *clock_, 3000,
         "[DEBUG] fillEgoStatus: Found avoid_required object (ID: %s, to_stop_line: %.2f, "
         "is_avoidable: %s, is_parked: %s)",
         to_hex_string(o.object.object_id).c_str(), o.to_stop_line, o.is_avoidable ? "true" : "false",
@@ -739,7 +738,7 @@ void StaticObstacleAvoidanceModule::fillEgoStatus(
     data.yield_required = false;
     data.safe_shift_line = data.new_shift_line;
     RCLCPP_INFO_THROTTLE(
-      getLogger(), *clock_, 1000,
+      getLogger(), *clock_, 3000,
       "[DEBUG] fillEgoStatus: Path is SAFE - Will execute avoidance (yield_required=false)");
     return;
   }
@@ -752,7 +751,7 @@ void StaticObstacleAvoidanceModule::fillEgoStatus(
     data.yield_required = false;
     data.safe_shift_line = data.new_shift_line;
     RCLCPP_WARN_THROTTLE(
-      getLogger(), *clock_, 2000,
+      getLogger(), *clock_, 3000,
       "[DEBUG] fillEgoStatus: Yield maneuver is DISABLED - Will attempt avoidance even if unsafe "
       "(enable_yield_maneuver=false)");
     return;
@@ -901,7 +900,7 @@ void StaticObstacleAvoidanceModule::updateEgoBehavior(
   const auto insert_velocity = [this, &data, &path]() {
     if (data.yield_required) {
       RCLCPP_INFO_THROTTLE(
-        getLogger(), *clock_, 1000,
+        getLogger(), *clock_, 3000,
         "[DEBUG] updateEgoBehavior: Inserting WAIT POINT (yield_required=true) - Vehicle will STOP");
       insertWaitPoint(isBestEffort(parameters_->policy_deceleration), path);
       return;
@@ -909,14 +908,14 @@ void StaticObstacleAvoidanceModule::updateEgoBehavior(
 
     if (!data.avoid_required) {
       RCLCPP_INFO_THROTTLE(
-        getLogger(), *clock_, 1000,
+        getLogger(), *clock_, 3000,
         "[DEBUG] updateEgoBehavior: No avoid_required - No velocity modification needed");
       return;
     }
 
     if (!data.found_avoidance_path) {
       RCLCPP_WARN_THROTTLE(
-        getLogger(), *clock_, 1000,
+        getLogger(), *clock_, 3000,
         "[DEBUG] updateEgoBehavior: Inserting WAIT POINT - No avoidance path found (found_avoidance_path=false)");
       insertWaitPoint(isBestEffort(parameters_->policy_deceleration), path);
       return;
@@ -924,14 +923,14 @@ void StaticObstacleAvoidanceModule::updateEgoBehavior(
 
     if (isWaitingApproval() && path_shifter_.getShiftLines().empty()) {
       RCLCPP_WARN_THROTTLE(
-        getLogger(), *clock_, 1000,
+        getLogger(), *clock_, 3000,
         "[DEBUG] updateEgoBehavior: Inserting WAIT POINT - Waiting approval and shift_lines empty");
       insertWaitPoint(isBestEffort(parameters_->policy_deceleration), path);
       return;
     }
 
     RCLCPP_INFO_THROTTLE(
-      getLogger(), *clock_, 1000,
+      getLogger(), *clock_, 3000,
       "[DEBUG] updateEgoBehavior: Inserting STOP POINT - Path is unsafe during shifting");
     insertStopPoint(isBestEffort(parameters_->policy_deceleration), path);
   };
@@ -951,14 +950,14 @@ bool StaticObstacleAvoidanceModule::isSafePath(
 
   if (force_deactivated_) {
     RCLCPP_WARN_THROTTLE(
-      getLogger(), *clock_, 2000,
+      getLogger(), *clock_, 3000,
       "[DEBUG] isSafePath: FALSE - Module is force_deactivated");
     return false;
   }
 
   if (!parameters_->enable_safety_check) {
     RCLCPP_INFO_THROTTLE(
-      getLogger(), *clock_, 2000,
+      getLogger(), *clock_, 3000,
       "[DEBUG] isSafePath: TRUE - Safety check is disabled (enable_safety_check=false)");
     return true;  // if safety check is disabled, it always return safe.
   }
@@ -991,7 +990,7 @@ bool StaticObstacleAvoidanceModule::isSafePath(
 
   if (!has_left_shift && !has_right_shift) {
     RCLCPP_INFO_THROTTLE(
-      getLogger(), *clock_, 2000,
+      getLogger(), *clock_, 3000,
       "[DEBUG] isSafePath: TRUE - No lateral shift detected (has_left_shift=false, has_right_shift=false)");
     return true;
   }
@@ -1003,7 +1002,7 @@ bool StaticObstacleAvoidanceModule::isSafePath(
       avoid_data_, planner_data_, parameters_, has_left_shift, has_right_shift, debug);
 
   RCLCPP_INFO_THROTTLE(
-    getLogger(), *clock_, 1000,
+    getLogger(), *clock_, 3000,
     "[DEBUG] isSafePath: Checking safety - has_left_shift=%s, has_right_shift=%s, "
     "safety_check_target_objects=%zu, hysteresis_factor=%.2f",
     has_left_shift ? "true" : "false", has_right_shift ? "true" : "false",
@@ -1011,7 +1010,7 @@ bool StaticObstacleAvoidanceModule::isSafePath(
 
   if (safety_check_target_objects.empty()) {
     RCLCPP_INFO_THROTTLE(
-      getLogger(), *clock_, 2000,
+      getLogger(), *clock_, 3000,
       "[DEBUG] isSafePath: TRUE - No safety check target objects");
     return true;
   }
@@ -1062,7 +1061,7 @@ bool StaticObstacleAvoidanceModule::isSafePath(
           debug.collision_check, current_debug_data, false);
 
         RCLCPP_WARN_THROTTLE(
-          getLogger(), *clock_, 1000,
+          getLogger(), *clock_, 3000,
           "[DEBUG] isSafePath: FALSE - COLLISION DETECTED! Object ID: %s, type: %s, "
           "is_object_front=%s, is_object_moving=%s, is_object_oncoming=%s, v_norm=%.2f, "
           "hysteresis_factor=%.2f. This is why vehicle stops instead of avoiding!",
@@ -1084,7 +1083,7 @@ bool StaticObstacleAvoidanceModule::isSafePath(
 
   const bool is_safe = safe_ || safe_count_ > parameters_->hysteresis_factor_safe_count;
   RCLCPP_INFO_THROTTLE(
-    getLogger(), *clock_, 1000,
+    getLogger(), *clock_, 3000,
     "[DEBUG] isSafePath: %s - safe_=%s, safe_count_=%zu, hysteresis_factor_safe_count=%zu",
     is_safe ? "TRUE" : "FALSE", safe_ ? "true" : "false", safe_count_,
     parameters_->hysteresis_factor_safe_count);
@@ -1598,7 +1597,7 @@ bool StaticObstacleAvoidanceModule::isValidShiftLine(
     const auto offset = std::abs(new_shift_length - helper_->getEgoShift());
     if (offset > THRESHOLD) {
       RCLCPP_INFO_THROTTLE(
-        getLogger(), *clock_, 1000, "new shift line is invalid. [HUGE OFFSET (%.2f)]", offset);
+        getLogger(), *clock_, 3000, "new shift line is invalid. [HUGE OFFSET (%.2f)]", offset);
       return false;
     }
   }
@@ -1638,7 +1637,7 @@ bool StaticObstacleAvoidanceModule::isValidShiftLine(
           boost::geometry::distance(basic_point, (shift_length > 0.0 ? left_bound : right_bound)) <
           THRESHOLD) {
           RCLCPP_INFO_THROTTLE(
-            getLogger(), *clock_, 1000,
+            getLogger(), *clock_, 3000,
             "following latest new shift line may cause deviation from drivable area.");
           return false;
         }
@@ -1972,21 +1971,21 @@ void StaticObstacleAvoidanceModule::insertWaitPoint(
   // If avoidance path is NOT valid, don't insert any stop points.
   if (!data.valid) {
     RCLCPP_INFO_THROTTLE(
-      getLogger(), *clock_, 1000,
+      getLogger(), *clock_, 3000,
       "[DEBUG] insertWaitPoint: Skipping - Path is NOT valid (valid=false)");
     return;
   }
 
   if (!data.stop_target_object) {
     RCLCPP_INFO_THROTTLE(
-      getLogger(), *clock_, 1000,
+      getLogger(), *clock_, 3000,
       "[DEBUG] insertWaitPoint: Skipping - No stop_target_object");
     return;
   }
 
   if (helper_->isShifted()) {
     RCLCPP_INFO_THROTTLE(
-      getLogger(), *clock_, 1000,
+      getLogger(), *clock_, 3000,
       "[DEBUG] insertWaitPoint: Skipping - Already shifted (avoidance maneuver initiated)");
     return;
   }
@@ -2001,7 +2000,7 @@ void StaticObstacleAvoidanceModule::insertWaitPoint(
   // and return immediately
   if (!use_constraints_for_decel) {
     RCLCPP_INFO_THROTTLE(
-      getLogger(), *clock_, 1000,
+      getLogger(), *clock_, 3000,
       "[DEBUG] insertWaitPoint: Inserting decel point (to_stop_line=%.2f, use_constraints=false)",
       data.to_stop_line);
     utils::static_obstacle_avoidance::insertDecelPoint(
@@ -2025,7 +2024,7 @@ void StaticObstacleAvoidanceModule::insertWaitPoint(
   // If target object can be stopped for, insert a deceleration point and return
   if (data.stop_target_object.value().is_stoppable) {
     RCLCPP_INFO_THROTTLE(
-      getLogger(), *clock_, 1000,
+      getLogger(), *clock_, 3000,
       "[DEBUG] insertWaitPoint: Inserting decel point - Object is stoppable (to_stop_line=%.2f)",
       data.to_stop_line);
     utils::static_obstacle_avoidance::insertDecelPoint(
@@ -2048,20 +2047,20 @@ void StaticObstacleAvoidanceModule::insertStopPoint(
 
   if (data.safe) {
     RCLCPP_INFO_THROTTLE(
-      getLogger(), *clock_, 1000,
+      getLogger(), *clock_, 3000,
       "[DEBUG] insertStopPoint: Skipping - Path is safe (safe=true)");
     return;
   }
 
   if (!parameters_->enable_yield_maneuver_during_shifting) {
     RCLCPP_INFO_THROTTLE(
-      getLogger(), *clock_, 1000,
+      getLogger(), *clock_, 3000,
       "[DEBUG] insertStopPoint: Skipping - Yield maneuver during shifting is disabled");
     return;
   }
 
   RCLCPP_WARN_THROTTLE(
-    getLogger(), *clock_, 2000,
+    getLogger(), *clock_, 3000,
     "[DEBUG] insertStopPoint: Inserting STOP POINT - Path is unsafe during shifting (safe=false, "
     "enable_yield_maneuver_during_shifting=true)");
 
