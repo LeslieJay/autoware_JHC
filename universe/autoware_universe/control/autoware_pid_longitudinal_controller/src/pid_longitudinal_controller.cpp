@@ -826,7 +826,9 @@ void PidLongitudinalController::updateControlState(const ControlData & control_d
     m_under_control_starting_time =
       is_under_control ? std::make_shared<rclcpp::Time>(clock_->now()) : nullptr;
   }
-
+  // m_prev_keep_stopped_condition用于辅助判断“方向盘是否收敛后才能起步”的逻辑
+  //（防止方向盘未归正时车辆误起步）这样做的目的是：只要车辆不是STOPPED状态，每次进入STOPPED时都能重新判定“是否可以起步”，
+  // 不会受到上一次STOPPED状态下的历史影响
   if (m_control_state != ControlState::STOPPED) {
     m_prev_keep_stopped_condition = std::nullopt;
   }

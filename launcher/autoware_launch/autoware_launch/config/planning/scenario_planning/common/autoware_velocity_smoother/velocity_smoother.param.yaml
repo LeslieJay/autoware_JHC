@@ -23,7 +23,7 @@
     curvature_threshold: 0.02                # if curvature > curvature_threshold, steeringRateLimit is triggered [1/m]
 
     # engage & replan parameters
-    replan_vel_deviation: 0.8         # velocity deviation to replan initial velocity [m/s]
+    replan_vel_deviation: 2.0         # velocity deviation to replan initial velocity [m/s]
     engage_velocity: 0.8               # engage velocity threshold [m/s] (if the trajectory velocity is higher than this value, use this velocity for engage vehicle speed)
     engage_acceleration: 1.0           # engage acceleration [m/ss] (use this acceleration when engagement)
     engage_exit_ratio: 0.6             # exit engage sequence to normal velocity planning when the velocity exceeds engage_exit_ratio x engage_velocity.
