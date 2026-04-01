@@ -18,16 +18,16 @@ launch:
   # optional control checkers
   - arg:
       name: launch_lane_departure_checker
-      default: "true"
+      default: "false"
   - arg:
       name: launch_control_validator
-      default: "true"
+      default: "false"
   - arg:
       name: launch_autonomous_emergency_braking
-      default: "true"
+      default: "false"
   - arg:
       name: launch_collision_detector
-      default: "true"
+      default: "false"
   - arg:
       name: launch_obstacle_collision_checker
       default: "false"
@@ -36,4 +36,4 @@ launch:
       default: "false"
   - arg:
       name: launch_control_evaluator
-      default: "true"
+      default: "false"

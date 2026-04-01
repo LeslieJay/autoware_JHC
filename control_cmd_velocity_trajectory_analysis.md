@@ -64,7 +64,7 @@ Autoware 中与该问题最相关的链路通常如下：
 3. `path_smoother` 输出 `/planning/scenario_planning/lane_driving/motion_planning/path_smoother/path`
 4. `path_optimizer` 输出 `/planning/scenario_planning/lane_driving/motion_planning/path_optimizer/trajectory`
 5. `motion_velocity_planner` 基于 `path_optimizer/trajectory` 生成带速度信息的轨迹
-6. lane driving 最终输出 `/planning/scenario_planning/lane_driving/trajectory`
+6. `lane driving` 最终输出 `/planning/scenario_planning/lane_driving/trajectory`
 
 因此对你这个项目来说，lane driving 段最值得重点观察的不是单一一个 topic，而是下面这一组：
 
