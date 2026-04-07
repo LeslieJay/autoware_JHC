@@ -4,10 +4,10 @@
 
     # constraints param for normal driving
     normal:
-      min_acc: -2.5         # min deceleration [m/ss]
+      min_acc: -2.0         # min deceleration [m/ss]
       max_acc: 3.0          # max acceleration [m/ss]
-      min_jerk: -2.5        # min jerk [m/sss]
-      max_jerk: 2.5         # max jerk [m/sss]
+      min_jerk: -1.5        # min jerk [m/sss]
+      max_jerk: 1.5         # max jerk [m/sss]
 
     # constraints to be observed
     limit:
