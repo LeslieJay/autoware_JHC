@@ -1,13 +1,15 @@
 <!--
  * @Author: leslie leslie@byd.com
  * @Date: 2026-03-30 16:33:44
- * @LastEditors: leslie
- * @LastEditTime: 2026-04-07 08:53:14
+ * @LastEditors: wei.canming
+ * @LastEditTime: 2026-04-07 13:17:38
  * @FilePath: /autoware_JHC/planning模块快速调试手册.md
  * @Description: Do not edit
  * 
  * Copyright (c) 2026 by ${git_name_email}, All Rights Reserved. 
 -->
+
+# planning模块调试方法
 
 ## 数据回放与分析
 
@@ -58,7 +60,7 @@ ros2 bag play planning_topics_bag -l
 
 3. 查看自己想要的话题和数据
 
-### 一般流程
+## 测试过程中发现问题时排查流程
 
 当测试过程中发现，无法生成路径线，请按照以下步骤进行排查：
 
@@ -132,13 +134,48 @@ ros2 topic echo /planning/scenario_planning/lane_driving/behavior_planning/behav
 工作流程：
 
 1. 先确认最终轨迹 `/planning/scenario_planning/trajectory` 是否真的插入 0 速点，如果有那就说明是规划的问题，如果没有那就是下游模块的问题(很大可能是控制部分，建议优先排查)
-2. 再对比查看 `/planning/scenario_planning/lane_driving/motion_planning/path_optimizer/trajectory` 和 `/planning/scenario_planning/lane_driving/trajectory`，是否是该模块意外触发了避障组件，导致速度为0
-3. 查看 `planning_factors` 和 `/api/planning/velocity_factors`，查看规划模块基于什么原因，选择将当前速度设置为0
-4. 再看 obstacle_stop 的 `planning_info`、`debug_markers`、`virtual_walls`，查看避障组件计算得到的障碍物信息，可以查看是否和实际的相同
-5. 最后回看感知模块和定位模块的输入，感知模块主要看 occupancy grid 和 **车道线内** 的物体
 
-开发结论判据：
+2. 再对比查看 `/planning/scenario_planning/lane_driving/motion_planning/path_optimizer/trajectory` 和 `/planning/scenario_planning/lane_driving/trajectory`，是否是该模块意外触发了避障组件，导致速度为0
+
+3. 查看 `planning_factors` 和 `/api/planning/velocity_factors`，查看规划模块基于什么原因，选择将当前速度设置为0
+
+4. 再看 obstacle_stop 的 `planning_info`、`debug_markers`、`virtual_walls`，查看避障组件计算得到的障碍物信息，可以查看是否和实际情况一致
+
+5. 最后回看感知模块和定位模块的输入，感知模块主要看 occupancy grid 和 **车道线内** 的物体(车道线外的物体不会被算作障碍物)
+
+经验总结：
 
 - 只有 motion_velocity_planner 后异常: 插件问题或感知输入问题
 - 只有最终 trajectory 异常: velocity_smoother 或限速链路问题
 
+### 排查轨迹异常
+
+建议按以下顺序检查：
+
+1. 看 route 是否正确
+   - `/planning/mission_planning/route`
+   - `/planning/mission_planning/route_marker`
+
+2. 看 path_generator 输出是否已经异常
+   - `/planning/scenario_planning/lane_driving/behavior_planning/path_with_lane_id`
+
+3. 看 behavior_velocity_planner 前后是否发生变化
+   - `/planning/scenario_planning/lane_driving/behavior_planning/path_with_lane_id`
+   - `/planning/scenario_planning/lane_driving/behavior_planning/path`
+
+4. 看 trajectory 转换和下游速度模块是否出现问题
+   - `/planning/scenario_planning/lane_driving/motion_planning/path_optimizer/trajectory`
+   - `/planning/scenario_planning/lane_driving/motion_planning/motion_velocity_planner/trajectory`
+   - `/planning/scenario_planning/trajectory`
+
+5. 检查定位和地图是否一致
+   - `/localization/kinematic_state`
+   - `/map/vector_map`
+
+如果 route_marker 在 RViz 中就已经贴错车道，那不是后级轨迹优化问题，而是 route 本身或 map/定位问题。
+
+## 总结
+
+- 关键就是看上述的9条话题，通过查看话题来反向排查是哪一个模块出现了问题
+
+- 对于常见的问题(绕障，停车)，可以实时打印debug话题，查看关键信息来快速定位异常节点
