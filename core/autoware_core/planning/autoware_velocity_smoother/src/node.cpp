@@ -441,6 +441,17 @@ void VelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstSharedPtr 
   autoware_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
   RCLCPP_DEBUG(get_logger(), "========================= run start =========================");
+
+  // 设置静态变量用于控制打印频率
+  static rclcpp::Time last_print_time = clock_->now();
+  static bool first_call = true;
+
+  // 获取当前时间
+  auto current_time = clock_->now();
+
+  // 计算距离上次打印的时间差（秒）
+  double time_since_last_print = (current_time - last_print_time).seconds();
+
   RCLCPP_INFO_THROTTLE(get_logger(), *clock_, 5000, "VelocitySmootherNode: onCurrentTrajectory called");
   stop_watch_.tic();
 
@@ -557,6 +568,14 @@ void VelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstSharedPtr 
 
   // Publish diagnostics
   diagnostics_interface_->publish(now());
+
+  if (first_call || time_since_last_print >= 1.0) {
+
+    // 更新最后打印时间
+    last_print_time = current_time;
+    first_call = false;
+
+  }
 
   RCLCPP_DEBUG(get_logger(), "========================== run() end ==========================\n\n");
 }
