@@ -268,6 +268,7 @@ Visualization Manager:
             center_lane_line: true
             center_line_arrows: true
             lane_start_bound: true
+            lanelet direction: true
             lanelet_id: true
             left_lane_bound: true
             right_lane_bound: true
@@ -3306,14 +3307,22 @@ Visualization Manager:
                 Debug:
                   Control: true
                   Localization:
-                    EKFPoseHistory: true
-                    NDT pointclouds: true
-                    NDTLoadedPCDMap: true
-                    NDTPoseHistory: true
+                    "": true
                     Value: true
                   Map: true
                   Perception:
-                    "": true
+                    CameraLidarFusion(purple): true
+                    Centerpoint(red1): true
+                    CenterpointROIFusion(red2): true
+                    CenterpointValidator(red3): true
+                    Detection(yellow): true
+                    DetectionByTracker(orange): true
+                    PointPainting(light_green1): true
+                    PointPaintingROIFusion(light_green2): true
+                    PointPaintingValidator(light_green3): true
+                    Prediction(light_blue): true
+                    RadarFarObjects(white): true
+                    Tracking(green): true
                     Value: true
                   Planning:
                     "":
@@ -4680,7 +4689,7 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: -1.3815422058105469
+      Scale: -0.6179547309875488
       Target Frame: viewer
       Value: TopDownOrtho (rviz_default_plugins)
       X: 27.536840438842773
