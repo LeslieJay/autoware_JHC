@@ -219,11 +219,11 @@
       avoidance:
         # avoidance lateral parameters
         lateral:
-          th_avoid_execution: 0.09                      # [m] FOR DEVELOPER
+          th_avoid_execution: 0.09                      # [m] FOR DEVELOPER 
           th_small_shift_length: 0.101                  # [m] FOR DEVELOPER
-          soft_drivable_bound_margin: 0.3               # [m]
-          hard_drivable_bound_margin: 0.3               # [m]
-          max_right_shift_length: 5.0                   # [m] FOR DEVELOPER
+          soft_drivable_bound_margin: 0.3               # [m] 软边界安全距离，影响曲线能偏移的最大范围
+          hard_drivable_bound_margin: 0.3               # [m] 硬边界安全距离，绕障路径不能超出该限制
+          max_right_shift_length: 5.0                   # [m] 最大右/左偏移量，决定曲线横向移动极限
           max_left_shift_length: 5.0                    # [m] FOR DEVELOPER
           max_deviation_from_lane: 0.2                  # [m]
           # approve the next shift line after reaching this percentage of the current shift line length.

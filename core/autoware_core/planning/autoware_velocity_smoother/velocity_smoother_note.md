@@ -1,8 +1,8 @@
 <!--
  * @Author: leslie leslie@byd.com
  * @Date: 2026-02-26 10:14:33
- * @LastEditors: leslie
- * @LastEditTime: 2026-04-02 10:00:56
+ * @LastEditors: wei.canming
+ * @LastEditTime: 2026-04-08 16:17:50
  * @FilePath: /autoware_JHC/src/autoware_JHC/core/autoware_core/planning/autoware_velocity_smoother/velocity_smoother_note.md
  * @Description: 
 -->
@@ -87,3 +87,16 @@ ros2 param set /planning/scenario_planning/velocity_smoother enable_steering_rat
 点51-61:   0.505 → 2.0 m/s (加速阶段 - 11个点)
 点62-82:   2.0 m/s (恒定巡航 - 21个点)
 点83-85:   2.0 → 0.0 m/s (减速停车 - 3个点)
+
+### 用来debug的话题名称
+
+1. pub_trajectory_raw_  移除 OverlapPoints 之后的轨迹，不改变轨迹点的速度
+
+2. pub_trajectory_vel_lim_ 采取速度限制之后的轨迹
+
+3. pub_trajectory_latacc_filtered_
+
+4. pub_trajectory_steering_rate_limited_
+
+5. publishDebugTrajectories 应用QP优化后的轨迹，包括 前向/后向/合并后的轨迹
+

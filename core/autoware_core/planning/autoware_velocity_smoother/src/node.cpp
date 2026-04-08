@@ -452,7 +452,6 @@ void VelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstSharedPtr 
   // 计算距离上次打印的时间差（秒）
   double time_since_last_print = (current_time - last_print_time).seconds();
 
-  RCLCPP_INFO_THROTTLE(get_logger(), *clock_, 5000, "VelocitySmootherNode: onCurrentTrajectory called");
   stop_watch_.tic();
 
   diagnostics_interface_->clear();
@@ -466,7 +465,7 @@ void VelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstSharedPtr 
   
   // guard
   if (!checkData()) {
-    RCLCPP_DEBUG(get_logger(), "VelocitySmootherNode: Data check failed");
+    RCLCPP_ERROR(get_logger(), "VelocitySmootherNode: Data check failed");
     return;
   }
   // RCLCPP_INFO_THROTTLE(get_logger(), *clock_, 5000, "VelocitySmootherNode: Data check passed");
@@ -483,21 +482,7 @@ void VelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstSharedPtr 
 
   // Set 0 at the end of the trajectory
   input_points.back().longitudinal_velocity_mps = 0.0;
-  // Print the input trajectory
-  // RCLCPP_INFO_THROTTLE(
-  //   get_logger(), *clock_, 3000,
-  //   "Input trajectory size: %lu", input_points.size());
-  // for (size_t i = 0; i < input_points.size(); ++i) {
-  //   RCLCPP_INFO(
-  //     get_logger(),
-  //     "Point %lu: x=%f, y=%f, z=%f, velocity=%f, acceleration=%f",
-  //     i,
-  //     input_points.at(i).pose.position.x,
-  //     input_points.at(i).pose.position.y,
-  //     input_points.at(i).pose.position.z,
-  //     input_points.at(i).longitudinal_velocity_mps,
-  //     input_points.at(i).acceleration_mps2);
-  // }
+
   // calculate prev closest point
   if (!prev_output_.empty()) {
     current_closest_point_from_prev_output_ = calcProjectedTrajectoryPointFromEgo(prev_output_);
@@ -516,26 +501,10 @@ void VelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstSharedPtr 
 
   const auto output = calcTrajectoryVelocity(input_points);
   if (output.empty()) {
-    RCLCPP_WARN(get_logger(), "Output Point is empty");
-    RCLCPP_INFO_THROTTLE(get_logger(), *clock_, 5000, "VelocitySmootherNode: calcTrajectoryVelocity returned empty output");
+    RCLCPP_ERROR(get_logger(), "Output Point is empty");
     return;
   }
-  // RCLCPP_INFO_THROTTLE(get_logger(), *clock_, 5000, "VelocitySmootherNode: calcTrajectoryVelocity completed successfully");
-  // Print the output trajectory
-  // RCLCPP_INFO_THROTTLE(
-  //   get_logger(), *clock_, 3000,
-  //   "Output trajectory size: %lu", output.size());
-  // for (size_t i = 0; i < output.size(); ++i) {
-  //   RCLCPP_INFO(
-  //     get_logger(),
-  //     "Point %lu: x=%f, y=%f, z=%f, velocity=%f, acceleration=%f",
-  //     i,
-  //     output.at(i).pose.position.x,
-  //     output.at(i).pose.position.y,
-  //     output.at(i).pose.position.z,
-  //     output.at(i).longitudinal_velocity_mps,
-  //     output.at(i).acceleration_mps2);
-  // }
+  
   // Note that output velocity is resampled by linear interpolation
   auto output_resampled = resampling::resampleTrajectory(
     output, current_odometry_ptr_->twist.twist.linear.x, current_odometry_ptr_->pose.pose,
@@ -571,6 +540,14 @@ void VelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstSharedPtr 
 
   if (first_call || time_since_last_print >= 1.0) {
 
+    // 只打印速度
+
+    // 1. input_points
+
+    // 2. output
+
+    // 3. output_resampled
+
     // 更新最后打印时间
     last_print_time = current_time;
     first_call = false;
@@ -603,7 +580,6 @@ TrajectoryPoints VelocitySmootherNode::calcTrajectoryVelocity(
 {
   autoware_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
-  RCLCPP_INFO_THROTTLE(get_logger(), *clock_, 5000, "calcTrajectoryVelocity: Starting with %lu input points", traj_input.size());
   TrajectoryPoints output{};  // velocity is optimized by qp solver
 
   // Extract trajectory around self-position with desired forward-backward length
@@ -613,10 +589,8 @@ TrajectoryPoints VelocitySmootherNode::calcTrajectoryVelocity(
     traj_input, input_closest, node_param_.extract_ahead_dist, node_param_.extract_behind_dist);
   if (traj_extracted.empty()) {
     RCLCPP_WARN(get_logger(), "Fail to extract the path from the input trajectory");
-    RCLCPP_INFO_THROTTLE(get_logger(), *clock_, 5000, "calcTrajectoryVelocity: Path extraction failed");
     return prev_output_;
   }
-  RCLCPP_INFO_THROTTLE(get_logger(), *clock_, 5000, "calcTrajectoryVelocity: Extracted %lu points around index %lu", traj_extracted.size(), input_closest);
 
   // Debug
   if (publish_debug_trajs_) {
@@ -643,26 +617,9 @@ TrajectoryPoints VelocitySmootherNode::calcTrajectoryVelocity(
 
   // Smoothing velocity
   if (!smoothVelocity(traj_extracted, traj_extracted_closest, output)) {
-    RCLCPP_INFO_THROTTLE(get_logger(), *clock_, 5000, "calcTrajectoryVelocity: Smoothing failed");
+    RCLCPP_WARN(get_logger(), "calcTrajectoryVelocity: Smoothing failed");
     return prev_output_;
   }
-
-  // Print the output trajectory
-  RCLCPP_INFO_THROTTLE(
-    get_logger(), *clock_, 3000,
-    "calcTrajectoryVelocity: Output trajectory size: %lu", output.size());
-  
-  // for (size_t i = 0; i < output.size(); ++i) {
-  //   RCLCPP_INFO(
-  //     get_logger(),
-  //     "Output Point %lu: x=%.3f, y=%.3f, z=%.3f, velocity=%.3f, acceleration=%.3f",
-  //     i,
-  //     output.at(i).pose.position.x,
-  //     output.at(i).pose.position.y,
-  //     output.at(i).pose.position.z,
-  //     output.at(i).longitudinal_velocity_mps,
-  //     output.at(i).acceleration_mps2);
-  // }
 
   return output;
 }
@@ -680,7 +637,6 @@ bool VelocitySmootherNode::smoothVelocity(
 
   // Calculate initial motion for smoothing
   const auto [initial_motion, type] = calcInitialMotion(input, input_closest);
-  RCLCPP_INFO_THROTTLE(get_logger(), *clock_, 5000, "smoothVelocity: Initial motion - vel: %.3f, acc: %.3f", initial_motion.vel, initial_motion.acc);
 
   // Lateral acceleration limit
   constexpr bool enable_smooth_limit = true;
@@ -737,10 +693,7 @@ bool VelocitySmootherNode::smoothVelocity(
         publish_debug_trajs_)) {
     RCLCPP_WARN(get_logger(), "Fail to solve optimization.");
     // RCLCPP_INFO_THROTTLE(get_logger(), *clock_, 5000, "smoothVelocity: Smoother apply failed");
-  } else {
-    // RCLCPP_INFO_THROTTLE(get_logger(), *clock_, 5000, "smoothVelocity: Smoother apply succeeded, smoothed size: %lu", traj_smoothed.size());
-  }
-
+  } 
   // Set 0 velocity after input-stop-point
   overwriteStopPoint(clipped, traj_smoothed);
 
@@ -759,7 +712,6 @@ bool VelocitySmootherNode::smoothVelocity(
   // Insert behind velocity for output's consistency
   insertBehindVelocity(traj_resampled_closest, type, traj_smoothed);
 
-  RCLCPP_DEBUG(get_logger(), "smoothVelocity : traj_smoothed.size() = %lu", traj_smoothed.size());
   if (publish_debug_trajs_) {
     {
       auto tmp = traj_lateral_acc_filtered;

@@ -8,7 +8,120 @@
 
 ### mission_planning
 
+### preset
+
+- 关闭用不上的节点
+- 必须使用的节点，调参数，改逻辑
+
+- *behavior path modules*:
+
+1. side shift（关闭）  用于接受远程（remote control）发送的路径偏移指令
+2. avoidance by lane change （必须） 换道避障，实际继承于 normal_lane_change
+3. bidirectional_traffic_module （关闭）专门处理双向都可行驶通过的单车道情况，保证车行驶在右侧
+4. dynamic_obstacle_avoidance_module (暂时关闭) 避让动态物体，减小复杂度
+5. externalRequestLaneChangeRightModuleManager （关闭）接受外部发送的变道指令
+6. goal planner （必须） 接近终点时触发，保证终点精确位姿，
+7. lane change （必须）正常的换道功能，
+8. sampling planner （关闭）
+9. start planner （不确定）不开的话，如果从路边起步，好像靠control也可以走到路中间，待测试
+10. static obstacle avoidance （必须开）同车道绕障 
+
+- *motion velocity planner modules*:
+
+1. boundary_departure_prevention_module (关闭)
+2. dynamic_obstacle_stop_module (必须) 规避动态障碍物
+3. obstacle_cruise_module (必须) 在障碍物后方巡游
+4. obstacle_slow_down (必须) 前方有障碍物时降低速度
+5. velocity_limit (必须) 在转弯时降低速度
+6. out_of_lane (必须) 在存在跑出道路的情况下，降低速度或者停止
+7. road_user_stop(必须) 检测到行人或者车辆时，降低速度
+8. run_out (必须) 添加减速点和停止点，以防止与朝自车行驶路径方向运动的目标物体发生碰撞
+
+### common
+
+1. max_vel: 全局速度限制，优先级最高
+2. normal/limit: 正常行驶/极限情况下的加速度/加加速度限制
+
 ### velocity_smoother
+
+- 影响弯道速度的参数
+
+1. enable_lateral_acc_limit/enable_steering_rate_limit: 分别通过横向加速度/转向角速率限制曲率不为0处的速度
+
+2. curvature_calculation_distance: 曲率计算采用的距离的路径点
+
+3. decel_distance_before_curve: 入弯前多长距离开始减速
+
+4. min_curve_velocity: 弯道内的最小速度
+
+5. max_steering_angle_rate: 最大转向速度上限越高，弯道内所允许的速度越大
+
+- 影响轨迹的形状
+
+1. extract_ahead_dist/extract_behind_dist: 影响轨迹的长度
+
+2. resampling parameters for optimization: 影响轨迹点上的速度平滑优化
+
+3. resampling parameters for post process: 后处理重采样参数 
+
+### static_obstacle_avoidance
+
+1. target_object
+
+target_object:
+   car:
+      th_moving_speed: 0.5                          # [m/s] Disabled forclosed park - not applicable
+      th_moving_time: 10.0                          # [s]
+      longitudinal_margin: 0.0                      # [m]
+      lateral_margin:
+         soft_margin: 0.0                            # [m]
+         hard_margin: 0.0                            # [m]
+         hard_margin_for_parked_vehicle: 0.0         # [m]
+      max_expand_ratio: 0.0                         # [-] FOR DEVELOPER
+      envelope_buffer_margin: 0.0                   # [m] FOR DEVELOPER
+      th_error_eclipse_long_radius : 0.6            # [m]
+
+- th_moving_speed/th_moving_time: 判断物体是否静止的阈值
+
+- longitudinal_margin/lateral_margin: 横向和纵向的安全余量
+
+- envelope_buffer_margin: 物体的包络多边形余量
+
+- max_expand_ratio: 扩展比例系数，间接影响 avoid_margin
+
+- th_error_eclipse_long_radius: 
+
+- lower/upper_distance_for_polygon_expansion: 包络多边形扩展的上下限，和max_expand_ratio一起影响 avoid_margin
+
+2. target_filtering 目标物体过滤
+
+- target_type: 执行绕障操作的目标物体类型
+
+- detection_area.static:
+
+- detection_area.*_distance: 检测障碍物的距离
+
+- safety_check: 安全检查
+
+3. avoidance 执行绕障操作的参数
+
+- lateral.th_avoid_execution 执行避让操作的阈值
+
+- lateral.th_small_shift_length 最小偏移长度，避免频繁生成绕障曲线
+
+- soft/hard_drivable_bound_margin 软边界安全距离，影响曲线能偏移的最大范围,硬边界安全距离，绕障路径不能超出该限制
+
+- *max_left_shift_length* 最大右/左偏移量，决定曲线横向移动极限
+
+- longitudinal.min_prepare_time 准备时间影响准备长度
+
+- min_prepare_distance 一起影响准备长度
+
+- min/buf_slow_down_speed 影响减速点的速度
+
+- constraints.lateral/longitudinal 影响偏移曲线上轨迹点的速度
+
+## 调试过程中的问题
 
 1. 弯道速度太慢
 
