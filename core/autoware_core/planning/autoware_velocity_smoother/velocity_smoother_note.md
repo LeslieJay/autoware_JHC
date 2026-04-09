@@ -90,13 +90,38 @@ ros2 param set /planning/scenario_planning/velocity_smoother enable_steering_rat
 
 ### 用来debug的话题名称
 
-1. pub_trajectory_raw_  移除 OverlapPoints 之后的轨迹，不改变轨迹点的速度
+- 选择发布这些debug话题
 
-2. pub_trajectory_vel_lim_ 采取速度限制之后的轨迹
+文件路径: `src/universe/autoware_universe/launch/tier4_planning_launch/launch/scenario_planning/scenario_planning.launch.xml`
 
-3. pub_trajectory_latacc_filtered_
+```
+<param name="publish_debug_trajs" value="true"/>
+```
+- 数据传输方向
 
-4. pub_trajectory_steering_rate_limited_
+`onCurrentTrajectory` → `calcTrajectoryVelocity` → `smoothVelocity`
 
-5. publishDebugTrajectories 应用QP优化后的轨迹，包括 前向/后向/合并后的轨迹
+| 顺序 | Topic | 代码位置 | 含义 |
+|:---:|---|---|---|
+| ① | `debug/trajectory_raw` | node.cpp:599 | `extractPathAroundIndex` 之后，去除重叠点+提取自车附近路径，**速度未改变** |
+| ② | `debug/trajectory_external_velocity_limited` | node.cpp:615 | `applyExternalVelocityLimit` + `applyStopApproachingVelocity` 之后 |
+| ③ | `debug/trajectory_lateral_acc_filtered` | node.cpp:719 | 横向加速度滤波（`applyLateralAccelerationFilter`）之后 |
+| ④ | `debug/trajectory_steering_rate_limited` | node.cpp:729 | 转向角速率限制（`applySteeringRateLimit`）之后 |
+| ⑤ | `debug/trajectory_time_resampled` | node.cpp:724 | 基于自车速度重采样（`resampleTrajectory`）之后，也是进入 QP 求解的输入 |
+| ⑥ | `debug/forward_filtered_trajectory` | node.cpp:1025 | QP 求解器前向 pass 结果 |
+| ⑦ | `debug/backward_filtered_trajectory` | node.cpp:1026 | QP 求解器后向 pass 结果 |
+| ⑧ | `debug/merged_filtered_trajectory` | node.cpp:1027 | 前向+后向合并后结果，`smoothVelocity` 的实际输出 |
+| ⑨ | `trajectory` | node.cpp:311 | `output_resampled`，经过**最终后处理重采样**（`post_resample_param`）后发布 |
+| ⑩ | `distance_to_stopline` | node.cpp:808 | 基于 `output`（未后处理重采样）计算停车距离 |
 
+> 注意：`trajectory_time_resampled`（line 724）的 publish 语句在代码中写在 `trajectory_steering_rate_limited`（line 729）之前，但**实际处理顺序**是 lateral_acc → steering_rate → time_resample → QP，debug publish 代码顺序与处理顺序有轻微不一致，不影响数据含义。
+
+- 排查 `/trajectory` 异常的步骤（逐步对比以下话题）
+
+1. **`trajectory_raw` 异常** → 问题在输入轨迹本身（上游节点）
+2. **`trajectory_external_velocity_limited` 开始异常** → 外部速度限制 / 停止接近速度逻辑问题
+3. **`trajectory_lateral_acc_filtered` 开始异常** → 横向加速度滤波问题（曲率计算 / `latacc_min_vel_arr`）
+4. **`trajectory_steering_rate_limited` 开始异常** → 转向角速率限制过激
+5. **`trajectory_time_resampled` 开始异常** → 重采样参数问题
+6. **`merged_filtered_trajectory` 开始异常** → QP 优化求解失败（检查 `max_acc`/`max_jerk`/`initial_motion` 参数）
+7. **`merged_filtered_trajectory` 正常但 `/trajectory` 异常** → 后处理重采样（`post_resample_param`）或 `insertBehindVelocity` 逻辑问题
