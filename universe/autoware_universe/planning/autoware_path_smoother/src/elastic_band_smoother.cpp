@@ -156,11 +156,17 @@ void ElasticBandSmoother::onPath(const Path::ConstSharedPtr path_ptr)
   time_keeper_ptr_->init();
   time_keeper_ptr_->tic(__func__);
 
+  RCLCPP_INFO(get_logger(), "[onPath] called. path points: %zu, left_bound: %zu, right_bound: %zu",
+    path_ptr->points.size(), path_ptr->left_bound.size(), path_ptr->right_bound.size());
+
   // check if data is ready and valid
   const auto ego_state_ptr = odom_sub_.take_data();
   if (!isDataReady(*path_ptr, ego_state_ptr, *get_clock())) {
+    RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000, "Data is not ready. Waiting...");
     return;
   }
+  RCLCPP_INFO(get_logger(), "[onPath] Step0: data ready. ego_vel=%.2f m/s",
+    ego_state_ptr->twist.twist.linear.x);
 
   // 0. return if path is backward
   // TODO(murooka): support backward path
@@ -178,8 +184,10 @@ void ElasticBandSmoother::onPath(const Path::ConstSharedPtr path_ptr)
     published_time_publisher_->publish_if_subscribed(path_pub_, path_ptr->header.stamp);
     return;
   }
+  RCLCPP_INFO(get_logger(), "[onPath] Step0: driving forward confirmed.");
 
   const auto input_traj_points = trajectory_utils::convertToTrajectoryPoints(path_ptr->points);
+  RCLCPP_INFO(get_logger(), "[onPath] Step0: input_traj_points size=%zu", input_traj_points.size());
 
   // 1. calculate trajectory with Elastic Band
   // 1.a check if replan (= optimization) is required
@@ -188,31 +196,44 @@ void ElasticBandSmoother::onPath(const Path::ConstSharedPtr path_ptr)
   const bool is_replan_required = [&]() {
     if (replan_checker_ptr_->isResetRequired(planner_data)) {
       // NOTE: always replan when resetting previous optimization
+      RCLCPP_INFO(get_logger(), "[onPath] Step1: reset required, triggering full replan.");
       resetPreviousData();
       return true;
     }
     // check replan when not resetting previous optimization
-    return !prev_optimized_traj_points_ptr_ ||
+    const bool replan = !prev_optimized_traj_points_ptr_ ||
            replan_checker_ptr_->isReplanRequired(planner_data, now());
+    RCLCPP_INFO(get_logger(), "[onPath] Step1: replan_required=%s (prev_result=%s)",
+      replan ? "true" : "false",
+      prev_optimized_traj_points_ptr_ ? "exists" : "null");
+    return replan;
   }();
   replan_checker_ptr_->updateData(planner_data, is_replan_required, now());
+
   time_keeper_ptr_->tic(__func__);
   auto smoothed_traj_points = is_replan_required ? eb_path_smoother_ptr_->smoothTrajectory(
                                                      input_traj_points, ego_state_ptr->pose.pose)
                                                  : *prev_optimized_traj_points_ptr_;
   time_keeper_ptr_->toc(__func__, "    ");
+  RCLCPP_INFO(get_logger(), "[onPath] Step1: smoothed_traj_points size=%zu (replan=%s)",
+    smoothed_traj_points.size(), is_replan_required ? "true" : "false");
 
   prev_optimized_traj_points_ptr_ =
     std::make_shared<std::vector<TrajectoryPoint>>(smoothed_traj_points);
 
   // 2. update velocity
   applyInputVelocity(smoothed_traj_points, input_traj_points, ego_state_ptr->pose.pose);
+  RCLCPP_INFO(get_logger(), "[onPath] Step2: applyInputVelocity done. smoothed size=%zu",
+    smoothed_traj_points.size());
 
   // 3. extend trajectory to connect the optimized trajectory and the following path smoothly
   auto full_traj_points = extendTrajectory(input_traj_points, smoothed_traj_points);
+  RCLCPP_INFO(get_logger(), "[onPath] Step3: extendTrajectory done. full_traj_points size=%zu",
+    full_traj_points.size());
 
   // 4. set zero velocity after stop point
   setZeroVelocityAfterStopPoint(full_traj_points);
+  RCLCPP_INFO(get_logger(), "[onPath] Step4: setZeroVelocityAfterStopPoint done.");
 
   time_keeper_ptr_->toc(__func__, "");
   *time_keeper_ptr_ << "========================================";
@@ -231,6 +252,7 @@ void ElasticBandSmoother::onPath(const Path::ConstSharedPtr path_ptr)
   const auto output_path_msg = trajectory_utils::create_path(*path_ptr, full_traj_points);
   path_pub_->publish(output_path_msg);
   published_time_publisher_->publish_if_subscribed(path_pub_, path_ptr->header.stamp);
+  RCLCPP_INFO(get_logger(), "[onPath] Step5: published traj(%zu pts) and path.", full_traj_points.size());
 }
 
 bool ElasticBandSmoother::isDataReady(
