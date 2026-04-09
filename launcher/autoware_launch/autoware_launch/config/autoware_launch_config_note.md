@@ -64,6 +64,10 @@
 
 3. resampling parameters for post process: 后处理重采样参数 
 
+4. extract_dist 影响最终输出路径的长度 两个trajectory_length只会影响中间过程的结果
+
+5. JerkFiltered.param 影响优化器求解结果，想更平滑提高 jerk_weight 值，增加jerk权重
+
 ### static_obstacle_avoidance
 
 1. target_object
@@ -120,6 +124,12 @@ target_object:
 - min/buf_slow_down_speed 影响减速点的速度
 
 - constraints.lateral/longitudinal 影响偏移曲线上轨迹点的速度
+
+### behavior_path_planner
+
+1. backward_path_length/forward_path_length: 最终决定路径长度的参数
+
+2. input_path_interval/output_path_interval: 输入输出path的采样间隔
 
 ## 调试过程中的问题
 
