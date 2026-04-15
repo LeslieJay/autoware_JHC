@@ -311,7 +311,7 @@ void VelocitySmootherNode::publishTrajectory(const TrajectoryPoints & trajectory
   pub_trajectory_->publish(publishing_trajectory);
   published_time_publisher_->publish_if_subscribed(
     pub_trajectory_, publishing_trajectory.header.stamp);
-  RCLCPP_INFO_THROTTLE(get_logger(), *clock_, 5000, "publishTrajectory: Published %lu points", trajectory.size());
+  // RCLCPP_INFO_THROTTLE(get_logger(), *clock_, 5000, "publishTrajectory: Published %lu points", trajectory.size());
 }
 
 void VelocitySmootherNode::calcExternalVelocityLimit()
@@ -513,6 +513,31 @@ void VelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstSharedPtr 
   // Set 0 at the end of the trajectory
   if (!output_resampled.empty()) {
     output_resampled.back().longitudinal_velocity_mps = 0.0;
+  }
+
+  if (const auto stop_idx = autoware::motion_utils::searchZeroVelocityIndex(output_resampled)) {
+    constexpr double min_publish_approach_velocity = 2.0e-3;
+    constexpr double min_taper_distance = 1.0e-3;
+    const double taper_distance = std::max(node_param_.stopping_distance, min_taper_distance);
+    const double taper_velocity = std::max(node_param_.stopping_velocity, 0.0);
+
+    // Post-resample 的线性插值会把 stop 前最后几拍压到极小值，
+    // 这里仅在最终发布前把 stop 前窗口内的目标速度抬到控制器阈值之上。
+    for (size_t idx = 0; idx < *stop_idx; ++idx) {
+      const double distance_to_stop =
+        autoware::motion_utils::calcSignedArcLength(output_resampled, idx, *stop_idx);
+      if (distance_to_stop <= 0.0 || distance_to_stop > taper_distance) {
+        continue;
+      }
+
+      const double max_taper_velocity = taper_velocity * (distance_to_stop / taper_distance);
+      const double current_velocity = output_resampled.at(idx).longitudinal_velocity_mps;
+      if (current_velocity > max_taper_velocity) {
+        output_resampled.at(idx).longitudinal_velocity_mps = max_taper_velocity;
+      } else if (current_velocity < min_publish_approach_velocity) {
+        output_resampled.at(idx).longitudinal_velocity_mps = min_publish_approach_velocity;
+      }
+    }
   }
 
   // update previous step infomation
@@ -792,17 +817,25 @@ void VelocitySmootherNode::publishStopDistance(const TrajectoryPoints & trajecto
 {
   const size_t closest = findNearestIndexFromEgo(trajectory);
 
-  // stop distance calculation
+  // 这里发布的是调试用的“ego 到 stop point 的有符号弧长”。
+  //
+  // 它本身不会直接修改轨迹速度，但它反映了 stop point 相对 ego 的位置关系。
+  // 当这个值在终点附近从小正数突然变成 0 或负值时，通常意味着 stop point 的判定
+  // 已经接近临界翻转，后续的重采样和 stop 覆盖也更容易把 0 速度区间突然推到 ego 附近。
   const double stop_dist_lim{50.0};
   double stop_dist{stop_dist_lim};
   const auto stop_idx{autoware::motion_utils::searchZeroVelocityIndex(trajectory)};
   if (stop_idx) {
+    // 找到 stop point 时，直接计算“最近点 -> stop point”的 signed arc length。
+    // 正值表示 stop point 仍在 ego 前方，负值表示最近点已经越过 stop point。
     stop_dist = autoware::motion_utils::calcSignedArcLength(trajectory, closest, *stop_idx);
   } else {
+    // 如果轨迹里没有 0 速度点，就发布一个带符号的极值，表示当前不存在可见的 stop point。
     stop_dist = closest > 0 ? stop_dist : -stop_dist;
   }
   Float32Stamped dist_to_stopline{};
   dist_to_stopline.stamp = this->now();
+  // 对调试量做限幅，避免异常值影响日志和可视化阅读。
   dist_to_stopline.data = std::clamp(stop_dist, -stop_dist_lim, stop_dist_lim);
   pub_dist_to_stopline_->publish(dist_to_stopline);
 }
@@ -905,18 +938,30 @@ void VelocitySmootherNode::overwriteStopPoint(
 {
   autoware_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
+  constexpr double min_taper_distance = 1.0e-3;
+
+  // 先在输入轨迹中找到第一个 0 速度点。
+  // 这个点就是当前规划语义里的“停车位置”。
   const auto stop_idx = autoware::motion_utils::searchZeroVelocityIndex(input);
   if (!stop_idx) {
     return;
   }
 
-  // Get Closest Point from Output
+  // 在优化后的输出轨迹中，找到与输入 stop point 最接近的点。
+  //
+  // 这一步相当于把“输入轨迹里的 stop 语义”映射到“优化后/重采样后的输出轨迹”上。
+  // 一旦这个映射点落得更靠前，下面的 0 速度覆盖也会更靠前，控制器就会更早读到接近 0 的目标速度。
   // TODO(planning/control team) deal with overlapped lanes with the same directions
   const auto nearest_output_point_idx = autoware::motion_utils::findNearestIndex(
     output, input.at(*stop_idx).pose, node_param_.ego_nearest_dist_threshold,
     node_param_.ego_nearest_yaw_threshold);
 
-  // check over velocity
+  // 检查优化后的 stop 点速度是否仍然偏大，然后从该点开始把后续速度全部压到 0。
+  //
+  // 这一步是“最终轨迹突然出现 0 速度区间”的直接来源：
+  // 如果 stop point 因为 stop distance 的变化被映射到了 ego 附近，
+  // 那么从这个点开始的整段 output 都会被 applyMaximumVelocityLimit(..., 0.0, output)
+  // 强制写成 0。
   bool is_stop_velocity_exceeded{false};
   double input_stop_vel{};
   double output_stop_vel{};
@@ -926,6 +971,26 @@ void VelocitySmootherNode::overwriteStopPoint(
     is_stop_velocity_exceeded = (optimized_stop_point_vel > over_stop_velocity_warn_thr_);
     input_stop_vel = input.at(*stop_idx).longitudinal_velocity_mps;
     output_stop_vel = output.at(*nearest_output_point_idx).longitudinal_velocity_mps;
+
+    const double taper_distance =
+      std::max(node_param_.stopping_distance, min_taper_distance);
+    const double taper_velocity = std::max(node_param_.stopping_velocity, 0.0);
+
+    // 仅在终点前的一小段距离内额外收紧速度上限，让速度在 stop 点前逐步收敛到 0。
+    for (size_t idx = 0; idx < *nearest_output_point_idx; ++idx) {
+      const double distance_to_stop =
+        autoware::motion_utils::calcSignedArcLength(output, idx, *nearest_output_point_idx);
+      if (distance_to_stop <= 0.0 || distance_to_stop > taper_distance) {
+        continue;
+      }
+
+      const double ratio = distance_to_stop / taper_distance;
+      const double target_velocity = taper_velocity * ratio;
+      if (output.at(idx).longitudinal_velocity_mps > target_velocity) {
+        output.at(idx).longitudinal_velocity_mps = target_velocity;
+      }
+    }
+
     trajectory_utils::applyMaximumVelocityLimit(
       *nearest_output_point_idx, output.size(), 0.0, output);
     RCLCPP_DEBUG(

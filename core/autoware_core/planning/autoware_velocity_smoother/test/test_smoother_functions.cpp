@@ -12,14 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "autoware/velocity_smoother/resample.hpp"
 #include "autoware/velocity_smoother/trajectory_utils.hpp"
 
 #include <gtest/gtest.h>
 
+#include <cmath>
+#include <optional>
 #include <vector>
 
 using autoware::velocity_smoother::trajectory_utils::TrajectoryPoints;
 using autoware_planning_msgs::msg::TrajectoryPoint;
+
+namespace
+{
+constexpr double test_yaw_threshold = 3.2;
+}
+
+namespace autoware::velocity_smoother::resampling::detail
+{
+std::optional<double> calcStopDistanceWithOvershootTolerance(
+  const TrajectoryPoints & input, const geometry_msgs::msg::Pose & current_pose,
+  const double nearest_dist_threshold, const double nearest_yaw_threshold);
+}  // namespace autoware::velocity_smoother::resampling::detail
 
 TrajectoryPoints genStraightTrajectory(const size_t size)
 {
@@ -60,4 +75,64 @@ TEST(TestTrajectoryUtils, CalcTrajectoryCurvatureFrom3Points)
       checkOutputSize(trajectory_size, idx_dist);
     }
   }
+}
+
+TEST(TestResample, CalcStopDistanceWithOvershootToleranceNearStopPoint)
+{
+  auto trajectory_points = genStraightTrajectory(6);
+  for (size_t i = 0; i < trajectory_points.size() - 1; ++i) {
+    trajectory_points.at(i).longitudinal_velocity_mps = 0.6;
+  }
+  trajectory_points.back().longitudinal_velocity_mps = 0.0;
+
+  geometry_msgs::msg::Pose current_pose;
+  current_pose.orientation.w = 1.0;
+  current_pose.position.x = 5.05;
+
+  const auto stop_distance =
+    autoware::velocity_smoother::resampling::detail::calcStopDistanceWithOvershootTolerance(
+      trajectory_points, current_pose, 3.0, test_yaw_threshold);
+
+  ASSERT_TRUE(stop_distance.has_value());
+  EXPECT_DOUBLE_EQ(*stop_distance, 0.0);
+}
+
+TEST(TestResample, CalcStopDistanceWithOvershootToleranceRejectsLargeOvershoot)
+{
+  auto trajectory_points = genStraightTrajectory(6);
+  for (size_t i = 0; i < trajectory_points.size() - 1; ++i) {
+    trajectory_points.at(i).longitudinal_velocity_mps = 0.6;
+  }
+  trajectory_points.back().longitudinal_velocity_mps = 0.0;
+
+  geometry_msgs::msg::Pose current_pose;
+  current_pose.orientation.w = 1.0;
+  current_pose.position.x = 5.8;
+
+  const auto stop_distance =
+    autoware::velocity_smoother::resampling::detail::calcStopDistanceWithOvershootTolerance(
+      trajectory_points, current_pose, 3.0, test_yaw_threshold);
+
+  EXPECT_FALSE(stop_distance.has_value());
+}
+
+TEST(TestResample, CalcStopDistanceWithOvershootToleranceUsesSignedEuclideanDistance)
+{
+  auto trajectory_points = genStraightTrajectory(6);
+  for (size_t i = 0; i < trajectory_points.size() - 1; ++i) {
+    trajectory_points.at(i).longitudinal_velocity_mps = 0.6;
+  }
+  trajectory_points.back().longitudinal_velocity_mps = 0.0;
+
+  geometry_msgs::msg::Pose current_pose;
+  current_pose.orientation.w = 1.0;
+  current_pose.position.x = 4.0;
+  current_pose.position.y = 3.0;
+
+  const auto stop_distance =
+    autoware::velocity_smoother::resampling::detail::calcStopDistanceWithOvershootTolerance(
+      trajectory_points, current_pose, 5.0, test_yaw_threshold);
+
+  ASSERT_TRUE(stop_distance.has_value());
+  EXPECT_NEAR(*stop_distance, std::sqrt(10.0), 1e-6);
 }
