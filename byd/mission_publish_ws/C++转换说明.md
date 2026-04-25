@@ -232,3 +232,4 @@ cmake_minimum_required(VERSION 3.8)
 colcon build --packages-select byd_initialize_pose_service byd_set_goal_service
 ```
 
+ros2 topic pub --once /planning/mission_planning/goal geometry_msgs/msg/PoseStamped "{header: {frame_id: map}, pose: {position: {x: -166.75697572081393, y: -84.12780794007236, z: 0.5922776638379166}, orientation: {x: 0.0009473683847744576, y: 0.00033535554962371337, z: -0.9788338857946326, w: 0.20465388843112373}}}"
