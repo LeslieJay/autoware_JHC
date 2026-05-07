@@ -2,7 +2,8 @@
   ros__parameters:
     delay_compensation_time: 0.1
 
-    enable_smooth_stop: true
+    # 关闭 SmoothStop（开环、与几何位置解耦），改用 PID 闭环 + 上游 velocity_smoother 收紧停车段。
+    enable_smooth_stop: false
     enable_overshoot_emergency: false
     enable_large_tracking_error_emergency: true
     enable_slope_compensation: true
@@ -36,7 +37,7 @@
     enable_brake_keeping_before_stop: false
     brake_keeping_acc: -0.2
 
-    # smooth stop state
+    # smooth stop state（已通过 enable_smooth_stop=false 禁用，参数保留为 Autoware 默认值）
     smooth_stop_max_strong_acc: -0.5
     smooth_stop_min_strong_acc: -0.8
     smooth_stop_weak_acc: -0.3

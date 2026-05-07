@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- 末段位置闭环节点 -->
+  <!-- enable=false 时节点降级为纯透传，不做任何 hold 计算 -->
+  <arg name="goal_position_holder_enable" default="false"/>
+
+  <node pkg="goal_position_holder" exec="goal_position_holder_node" name="goal_position_holder" output="screen">
+    <remap from="~/input/control_cmd" to="/control/trajectory_follower/control_cmd"/>
+    <remap from="~/input/kinematic_state" to="/localization/kinematic_state"/>
+    <!-- 用对齐后的轨迹判断末点是否已收敛到 goal -->
+    <remap from="~/input/trajectory" to="/planning/scenario_planning/trajectory_goal_aligned"/>
+    <remap from="~/input/goal_pose" to="/planning/mission_planning/echo_back_goal_pose"/>
+    <remap from="~/output/control_cmd" to="/control/trajectory_follower/control_cmd_holded"/>
+
+    <param name="enable" value="$(var goal_position_holder_enable)"/>
+    <param name="activation_distance" value="3.0"/>
+    <param name="activation_speed" value="1.0"/>
+    <param name="traj_to_goal_max" value="0.5"/>
+    <param name="kp" value="0.8"/>
+    <param name="kv" value="3.0"/>
+    <param name="a_min" value="-2.0"/>
+    <param name="a_max" value="0.5"/>
+    <param name="v_max" value="1.0"/>
+    <param name="dt_lookahead" value="0.1"/>
+    <param name="tol_pos" value="0.02"/>
+    <param name="tol_vel" value="0.05"/>
+    <param name="brake_acc" value="-1.5"/>
+
+    <!-- creep：车几乎停了但未到容差，强制低速推过去 -->
+    <param name="creep_speed_thresh" value="0.03"/>
+    <param name="creep_v" value="0.08"/>
+    <param name="creep_acc" value="0.15"/>
+
+    <!-- 横向闭环：steering_tire_angle = -k_lat·s_lat - k_yaw·yaw_err -->
+    <param name="enable_lateral" value="true"/>
+    <param name="k_lat" value="0.6"/>
+    <param name="k_yaw" value="1.0"/>
+    <param name="max_steer" value="0.6"/>
+    <param name="tol_lat" value="0.02"/>
+    <param name="tol_yaw" value="0.02"/>
+    <param name="lat_to_long_weight" value="1.0"/>
+  </node>
+</launch>

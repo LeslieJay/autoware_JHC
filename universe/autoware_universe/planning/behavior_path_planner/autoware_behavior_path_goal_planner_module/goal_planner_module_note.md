@@ -105,3 +105,141 @@ ros2 param set /planning/scenario_planning/lane_driving/behavior_planning/behavi
 1. 在地图中为 goal 附近添加 shoulder lanelet，让 pull over 有合法的目标车道
 
 2. 考虑 goal 是否应该设在车道中心线上，而不是需要 pull over 的位置
+
+---
+
+## 2026-04-25 快速理解与精停建议（新增）
+
+### 1. 代码在哪里看（建议阅读顺序）
+
+1. `src/manager.cpp`
+- 参数入口与装配：`GoalPlannerModuleManager::initGoalPlannerParameters()`
+- 场景模块实例化：`createNewSceneModuleInstance()`
+
+2. `src/goal_planner_module.cpp`
+- 主流程：`updateData()`、`plan()`、`isExecutionRequested()`
+- 线程同步：`syncWithThreads()`
+- 目标判定：`isOnModifiedGoal()`
+
+3. `src/decision_state.cpp`
+- 状态机：`NOT_DECIDED -> DECIDING -> DECIDED`
+- 稳定安全判定与迟滞：`keep_unsafe_time` + `check_collision_duration`
+
+4. `src/goal_searcher.cpp`
+- 候选目标生成：纵向/横向离散采样
+- 候选排序：`minimum_weighted_distance` / `minimum_longitudinal_distance`
+
+5. `src/pull_over_planner/shift_pull_over.cpp`
+- Shift 几何生成：`generatePullOverPath()`
+- 末段速度整形：`generateReferencePath()`
+
+### 2. 组件运行逻辑（快速心智模型）
+
+1. 模块是否触发
+- `isExecutionRequested()` 先判断目标是否可达、是否在请求距离内。
+
+2. 目标是否可修改
+- 允许修改：走 `goal_searcher.search()`，在目标附近生成多个 `goal_candidates`。
+- 不允许修改：只保留原始 goal（等价 fixed-goal 行为）。
+
+3. 候选路径生成（异步）
+- 主线程发送 request。
+- Lane Parking 线程生成 Shift/Arc/Bezier 候选。
+- Freespace 线程在需要时生成 freespace 候选。
+
+4. 安全判定与状态机
+- 先做动态/静态障碍物安全检查。
+- 在 `DECIDING` 持续稳定安全一段时间后进入 `DECIDED`。
+
+5. 执行与收敛
+- 选定 pull-over path 后执行。
+- 距离 `modified_goal` 小于 `th_arrived_distance` 即判定到达。
+
+### 3. 与停车精度直接相关的关键参数（按影响链路）
+
+1. 目标离散分辨率（规划上限）
+- `goal_search.goal_search_interval`
+- 近似决定纵向离散误差上限：`~ interval / 2`
+
+2. 路径离散与几何拟合
+- `center_line_path_interval`
+- 太大时，shift 起终点附近会出现几何量化误差
+
+3. 末段几何偏置
+- `pull_over.shift_parking.after_shift_straight_distance`
+- 在 Shift 模式下，这个值直接把 shift 结束点放在 goal 前方（沿切向）
+
+4. 到达判定门限
+- `th_arrived_distance`
+- 决定系统“宣布到达”的距离阈值，不改变真实轨迹，但会改变停止判定时刻
+
+5. 末段速度与制动可控性
+- `pull_over.pull_over_velocity`
+- `pull_over.pull_over_minimum_velocity`
+- `pull_over.maximum_deceleration`
+- `pull_over.shift_parking.deceleration_interval`
+
+### 4. 你当前配置中的亮点与风险
+
+#### 已经做得很对的部分
+
+1. `goal_search_interval=0.02` + `th_arrived_distance=0.02`
+- 规划离散分辨率与到达门限都对齐到 2 cm 级别。
+
+2. `pull_over_velocity=0.5` / `pull_over_minimum_velocity=0.1`
+- 低速末段更有利于减小控制超调。
+
+3. `after_shift_straight_distance=0.3`
+- 已显著减小“提前停车”偏置。
+
+#### 仍建议关注的点
+
+1. `max_lateral_offset=0.1` 但 `lateral_offset_interval=0.5`
+- 这会导致横向采样几乎只有 `dy=0`（基本不搜索横向微调）。
+- 若目标对齐误差经常是横向主导，建议把 `lateral_offset_interval` 降到 `0.02~0.05`。
+
+2. Bezier 分支仍是 `bezier_parking.after_shift_straight_distance=1.5`
+- 当进入 Bezier 分支（尤其 bus stop area 场景）时，可能重新引入明显纵向偏置。
+- 若你会启用 Bezier，建议与 Shift 分支保持一致（例如 `0.3`）。
+
+3. `mission_planner.enable_correct_goal_pose=false`
+- 若上层给定 goal 的姿态/落点本身不理想，关闭纠偏会把误差原样下发给下游。
+- 对精停场景，建议根据地图质量决定是否启用。
+
+### 5. 一个务实的精停调参流程（建议按此执行）
+
+1. 固定工况重复测试 20~50 次
+- 相同速度、相同初始姿态、相同路段。
+
+2. 记录两类误差
+- 规划终点误差：最终轨迹终点 vs modified_goal。
+- 实车停车误差：最终车辆 base_link vs modified_goal。
+
+3. 分离“系统偏置”与“随机噪声”
+- 均值偏差大：优先改几何参数（`after_shift_straight_distance`、采样间隔）。
+- 标准差大：优先看定位噪声/控制稳定性，而不是继续压规划参数。
+
+4. 参数迭代建议步长
+- `after_shift_straight_distance` 每次改 `0.05m`。
+- `goal_search_interval` / `center_line_path_interval` 每次改 `0.01m`。
+- 速度参数每次改 `0.1m/s`。
+
+5. 性能与精度平衡
+- 搜索间隔过小会显著增加候选数量与规划耗时。
+- 建议先用日志确认线程周期与 CPU 余量，再继续压间隔。
+
+### 6. 现实边界（必须明确）
+
+仅靠 goal planner 参数，通常无法稳定保证 ±2 cm 实车停车精度。常见瓶颈是：
+
+1. 定位噪声（NDT/匹配误差通常在厘米级以上）
+2. 底盘与低速控制跟踪误差
+3. 感知时延与控制周期离散化
+
+因此应采用“规划 + 控制 + 定位”三层联合优化：
+
+1. 规划层：离散分辨率与末段几何偏置
+2. 控制层：低速制动与爬行段参数
+3. 定位层：高精度定位与时间同步
+
+以上三层一起收敛，才有机会接近 2 cm 目标。

@@ -40,6 +40,8 @@ public:
     double over_a_weight;
     double over_j_weight;
     double jerk_filter_ds;
+    // 直接惩罚加速度大小 Σ a[i]^2 * ds，避免 QP 产生造成速度突变的大 |a|
+    double acc_weight;
   };
 
   explicit JerkFilteredSmoother(

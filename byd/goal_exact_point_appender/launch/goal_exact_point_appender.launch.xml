@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- 末点对齐节点：消除 planning 离散化造成的末点偏移 -->
+  <arg name="goal_exact_point_appender_enable" default="true"/>
+
+  <node pkg="goal_exact_point_appender" exec="goal_exact_point_appender_node"
+        name="goal_exact_point_appender" output="screen">
+    <!-- 输入：velocity_smoother 的原始离散化轨迹 -->
+    <remap from="~/input/trajectory" to="/planning/scenario_planning/trajectory"/>
+    <remap from="~/input/goal_pose" to="/planning/mission_planning/echo_back_goal_pose"/>
+    <!-- 输出：末点替换为 goal 精确坐标后的轨迹，trajectory_follower 读此 topic -->
+    <remap from="~/output/trajectory" to="/planning/scenario_planning/trajectory_goal_aligned"/>
+
+    <param name="enable" value="$(var goal_exact_point_appender_enable)"/>
+    <!-- 末点离 goal 距离阈值；超出此值不动（避免在远处插值出未优化轨迹） -->
+    <param name="activation_distance" value="0.5"/>
+    <!-- 替换/插入策略：
+         "replace" - 把末点 pose 替换为 goal（推荐）
+         "insert"  - 在末点后追加一个 goal 点（保留原末点用于平滑） -->
+    <param name="strategy" value="replace"/>
+    <!-- 末点速度归零（一般不用改） -->
+    <param name="force_zero_velocity_at_goal" value="true"/>
+  </node>
+</launch>

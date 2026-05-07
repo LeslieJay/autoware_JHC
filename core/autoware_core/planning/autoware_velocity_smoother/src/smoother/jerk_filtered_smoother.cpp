@@ -42,6 +42,8 @@ JerkFilteredSmoother::JerkFilteredSmoother(
   p.over_a_weight = node.declare_parameter<double>("over_a_weight");
   p.over_j_weight = node.declare_parameter<double>("over_j_weight");
   p.jerk_filter_ds = node.declare_parameter<double>("jerk_filter_ds");
+  // 新增：acceleration 平方惩罚，默认 0 保证向后兼容
+  p.acc_weight = node.declare_parameter<double>("acc_weight", 0.0);
 
   qp_interface_ =
     std::make_shared<autoware::qp_interface::ProxQPInterface>(false, 20000, 1.0e-8, 1.0e-6, false);
@@ -212,6 +214,18 @@ bool JerkFilteredSmoother::apply(
     P(IDX_A0 + i, IDX_A0 + i + 1) -= smooth_weight * w_x_ds_inv * w_x_ds_inv * interval_dist;
     P(IDX_A0 + i + 1, IDX_A0 + i) -= smooth_weight * w_x_ds_inv * w_x_ds_inv * interval_dist;
     P(IDX_A0 + i + 1, IDX_A0 + i + 1) += smooth_weight * w_x_ds_inv * w_x_ds_inv * interval_dist;
+  }
+
+  // 新增：acceleration 平方惩罚 -> minimize acc_weight * Σ a[i]^2 * ds[i]
+  // 直接抑制大 |a|，避免 QP 因为 over_a_weight 不够而选择"陡降速度"绕过加速度限制。
+  // 当 a 落在 [a_min, a_max] 内时，over_a_weight 不起作用；该项在合法区间内仍有效。
+  const double acc_weight = smoother_param_.acc_weight;
+  if (acc_weight > 0.0) {
+    for (size_t i = 0; i < N; ++i) {
+      const double ds_i =
+        (i < N - 1) ? std::max(interval_dist_arr.at(i), 0.0001) : 0.0001;
+      P(IDX_A0 + i, IDX_A0 + i) += acc_weight * ds_i;
+    }
   }
 
   // |v_max_i^2 - b_i|/v_max^2 -> minimize (-bi) * ds / v_max^2

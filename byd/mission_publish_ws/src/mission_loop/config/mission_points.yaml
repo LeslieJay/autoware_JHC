@@ -1,9 +1,9 @@
 mission_loop:
   ros__parameters:
 
-    arrive_distance_threshold: 2.0
-    arrive_speed_threshold: 0.15
-    arrive_time_threshold: 1.0
+    arrive_distance_threshold: 0.02
+    arrive_speed_threshold: 0.01
+    arrive_time_threshold: 3.0
 
     points: ["A", "B"]
 
@@ -14,7 +14,7 @@ mission_loop:
     points.A.orientation_y: 0.00033535554962371337
     points.A.orientation_z: -0.9788338857946326
     points.A.orientation_w: 0.20465388843112373
-    points.A.wait_time: 3.0
+    points.A.wait_time: 5.0
 
     points.B.x: -179.1208953857422
     points.B.y: -92.13262176513672

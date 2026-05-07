@@ -54,4 +54,15 @@
     <arg name="use_aeb_autoware_state_check" value="$(var use_aeb_autoware_state_check)"/>
     <arg name="predicted_path_checker_param_path" value="$(find-pkg-share autoware_launch)/config/control/predicted_path_checker/predicted_path_checker.param.yaml"/>
   </include>
+
+  <!-- 末点对齐节点：把 velocity_smoother 输出的轨迹末点替换为 goal 精确坐标，
+       消除 planning 离散化（output_resolution ~0.5 m）导致的末点偏移。
+       输入订阅 /planning/scenario_planning/trajectory（velocity_smoother 输出），
+       输出覆盖同一 topic，trajectory_follower 无需改动。-->
+  <include file="$(find-pkg-share goal_exact_point_appender)/launch/goal_exact_point_appender.launch.xml">
+    <arg name="goal_exact_point_appender_enable" value="true"/>
+  </include>
+
+  <!-- 末段位置闭环节点：补偿 PID 速度环死区，实现 cm 级 goal 停车精度 -->
+  <include file="$(find-pkg-share goal_position_holder)/launch/goal_position_holder.launch.xml"/>
 </launch>

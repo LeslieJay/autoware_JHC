@@ -539,7 +539,12 @@ Visualization Manager:
               Enabled: true
               Name: MonteCarloInitialPose
               Namespaces:
-                {}
+                initial_pose_index_color_marker: true
+                initial_pose_iteration_color_marker: true
+                initial_pose_transform_probability_color_marker: true
+                result_pose_index_color_marker: true
+                result_pose_iteration_color_marker: true
+                result_pose_transform_probability_color_marker: true
               Topic:
                 Depth: 5
                 Durability Policy: Volatile
@@ -3309,18 +3314,7 @@ Visualization Manager:
                     Value: true
                   Map: true
                   Perception:
-                    CameraLidarFusion(purple): true
-                    Centerpoint(red1): true
-                    CenterpointROIFusion(red2): true
-                    CenterpointValidator(red3): true
-                    Detection(yellow): true
-                    DetectionByTracker(orange): true
-                    PointPainting(light_green1): true
-                    PointPaintingROIFusion(light_green2): true
-                    PointPaintingValidator(light_green3): true
-                    Prediction(light_blue): true
-                    RadarFarObjects(white): true
-                    Tracking(green): true
+                    "": true
                     Value: true
                   Planning:
                     Objects Of Interest:
@@ -4701,7 +4695,7 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: -4.971884727478027
+      Scale: -0.04653915390372276
       Target Frame: viewer
       Value: TopDownOrtho (rviz_default_plugins)
       X: 27.536840438842773

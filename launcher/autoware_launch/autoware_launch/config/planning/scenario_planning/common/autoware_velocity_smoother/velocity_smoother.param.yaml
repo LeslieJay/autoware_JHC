@@ -27,9 +27,11 @@
     engage_velocity: 2.0               # engage velocity threshold [m/s] (if the trajectory velocity is higher than this value, use this velocity for engage vehicle speed)
     engage_acceleration: 1.0           # engage acceleration [m/ss] (use this acceleration when engagement)
     engage_exit_ratio: 0.9             # exit engage sequence to normal velocity planning when the velocity exceeds engage_exit_ratio x engage_velocity.
-    stop_dist_to_prohibit_engage: 1.0  # if the stop point is in this distance, the speed is set to 0 not to move the vehicle [m]
+    # 缩短强制零速区，让 PID 能闭环跟到非常接近 goal 的位置（旧值 1.0 m -> 0.05 m）。
+    stop_dist_to_prohibit_engage: 0.05  # if the stop point is in this distance, the speed is set to 0 not to move the vehicle [m]
 
-    # stop velocity
+    # stop velocity —— 低速进场：在距终点 2.5 m 处开始平滑降到 0.5 m/s，使 PID 能跟上。
+    # 旧值 stopping_distance=0.5 变化太陟，车辆冲过了 goal。
     stopping_velocity: 1.8  # change target velocity to this value before v=0 point [m/s]
     stopping_distance: 4.0    # distance for the stopping_velocity [m]. 0 means the stopping velocity is not applied.
 

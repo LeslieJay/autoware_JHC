@@ -65,7 +65,8 @@
         <composable_node pkg="autoware_vehicle_cmd_gate" plugin="autoware::vehicle_cmd_gate::VehicleCmdGate" name="vehicle_cmd_gate">
           <remap from="input/steering" to="/vehicle/status/steering_status"/>
           <remap from="input/operation_mode" to="/system/operation_mode/state"/>
-          <remap from="input/auto/control_cmd" to="/control/trajectory_follower/control_cmd"/>
+          <!-- 经 goal_position_holder 末段位置闭环转发后的话题 -->
+          <remap from="input/auto/control_cmd" to="/control/trajectory_follower/control_cmd_holded"/>
           <remap from="input/auto/turn_indicators_cmd" to="/planning/turn_indicators_cmd"/>
           <remap from="input/auto/hazard_lights_cmd" to="/planning/hazard_lights_cmd"/>
           <remap from="input/auto/gear_cmd" to="/control/shift_decider/gear_cmd"/>
@@ -129,7 +130,8 @@
       <group if="$(eval &quot;'$(var trajectory_follower_mode)' == 'trajectory_follower_node'&quot;)">
         <load_composable_node target="/control/control_container">
           <composable_node pkg="autoware_trajectory_follower_node" plugin="autoware::motion::control::trajectory_follower_node::Controller" name="controller_node_exe" namespace="trajectory_follower">
-            <remap from="~/input/reference_trajectory" to="/planning/scenario_planning/trajectory"/>
+            <!-- goal_exact_point_appender 把末点对齐到 goal 精确坐标后发布到此 topic -->
+            <remap from="~/input/reference_trajectory" to="/planning/scenario_planning/trajectory_goal_aligned"/>
             <remap from="~/input/current_odometry" to="/localization/kinematic_state"/>
             <remap from="~/input/current_steering" to="/vehicle/status/steering_status"/>
             <remap from="~/input/current_accel" to="/localization/acceleration"/>

@@ -1,10 +1,14 @@
 /**:
   ros__parameters:
     map_frame: map
-    arrival_check_angle_deg: 45.0
-    arrival_check_distance: 1.0
+    # Arrival checks are used by mission_planner state transition, not by trajectory endpoint sampling.
+    arrival_check_angle_deg: 1.0
+    arrival_check_distance: 0.1
     arrival_check_duration: 1.0
+    # Allowed yaw difference when validating/correcting goal orientation.
     goal_angle_threshold_deg: 45.0
+    # If true, mission_planner may correct the input goal pose to a lane-feasible pose.
+    # If false, original goal pose is kept as-is. Downstream path points can still be centerline-based.
     enable_correct_goal_pose: false
     reroute_time_threshold: 10.0
     minimum_reroute_length: 30.0
