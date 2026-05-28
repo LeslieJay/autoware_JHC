@@ -12,11 +12,11 @@ import rosbag2_py
 from rclpy.serialization import deserialize_message
 from rosidl_runtime_py.utilities import get_message
 
-BAG_PATH = '/media/f/nvme_storage/autoware/log/0424/planning_control_localization_06.bag'
-TARGET_SEC = 1777013084
+BAG_PATH = '/media/f/nvme_storage/autoware/log/0509/planning_control_localization_01.bag'
+TARGET_SEC = 1778318104
 OUT_ROOT = Path(
-    f'/media/f/nvme_storage/autoware/log/0424/'
-    f'planning_control_localization_06.bag_logs/path_sec_{TARGET_SEC}_plots'
+    f'/media/f/nvme_storage/autoware/log/0509/'
+    f'planning_control_localization_01.bag_logs/path_sec_{TARGET_SEC}_plots'
 )
 
 TOPICS_CONFIG = [
@@ -35,6 +35,56 @@ TOPICS_CONFIG = [
         'path',
         '/planning/scenario_planning/lane_driving/behavior_planning/path',
         'autoware_planning_msgs/msg/Path',
+    ),
+    (
+        'goal_planner_path_reference',
+        '/planning/path_reference/goal_planner',
+        'autoware_planning_msgs/msg/Path',
+    ),
+    (
+        'goal_planner_path_candidate',
+        '/planning/path_candidate/goal_planner',
+        'autoware_planning_msgs/msg/Path',
+    ),
+    (
+        'start_planner_path_reference',
+        '/planning/path_reference/start_planner',
+        'autoware_planning_msgs/msg/Path',
+    ),
+    (
+        'start_planner_path_candidate',
+        '/planning/path_candidate/start_planner',
+        'autoware_planning_msgs/msg/Path',
+    ),
+    (
+        'path_smoother_path',
+        '/planning/scenario_planning/lane_driving/motion_planning/path_smoother/path',
+        'autoware_planning_msgs/msg/Path',
+    ),
+    (
+        'path_optimizer_trajectory',
+        '/planning/scenario_planning/lane_driving/motion_planning/path_optimizer/trajectory',
+        'autoware_planning_msgs/msg/Trajectory',
+    ),
+    (
+        'lane_driving_trajectory',
+        '/planning/scenario_planning/lane_driving/trajectory',
+        'autoware_planning_msgs/msg/Trajectory',
+    ),
+    (
+        'scenario_selector_trajectory',
+        '/planning/scenario_planning/scenario_selector/trajectory',
+        'autoware_planning_msgs/msg/Trajectory',
+    ),
+    (
+        'velocity_smoother_trajectory',
+        '/planning/scenario_planning/velocity_smoother/trajectory',
+        'autoware_planning_msgs/msg/Trajectory',
+    ),
+    (
+        'scenario_planning_trajectory',
+        '/planning/scenario_planning/trajectory',
+        'autoware_planning_msgs/msg/Trajectory',
     ),
 ]
 
@@ -104,7 +154,8 @@ def save_path_msg(subdir, ts_ns, hs, label, pairs):
     ax.set_xlabel('point index')
     ax.set_ylabel('longitudinal_velocity_mps')
     ax.set_title(f'{label} | bag_ts={ts_ns} | pts={n} | max_jump={max_jump:.3f}')
-    ax.legend()
+    if jump_idx >= 0:
+        ax.legend()
     plt.tight_layout()
     fig.savefig(str(subdir / f'{fname}.png'))
     plt.close(fig)

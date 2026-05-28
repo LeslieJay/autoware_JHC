@@ -36,6 +36,8 @@ VS_TOPICS = [
     ("forward_filtered", "/planning/scenario_planning/velocity_smoother/debug/forward_filtered_trajectory"),
     ("backward_filtered", "/planning/scenario_planning/velocity_smoother/debug/backward_filtered_trajectory"),
     ("merged_filtered",  "/planning/scenario_planning/velocity_smoother/debug/merged_filtered_trajectory"),
+    ("clipped",          "/planning/scenario_planning/velocity_smoother/debug/trajectory_clipped"),
+    ("smoothed_pre_overwrite", "/planning/scenario_planning/velocity_smoother/debug/trajectory_smoothed_pre_overwrite"),
     ("output",           "/planning/scenario_planning/velocity_smoother/trajectory"),
 ]
 
@@ -85,7 +87,7 @@ def _open_reader(bag_dir: str, topics: list[str]) -> rosbag2_py.SequentialReader
 # ── 模式 A：单话题 ────────────────────────────────────────────────────────────
 
 def extract_sec(bag_dir: str, target_sec: int, out_base: str) -> None:
-    raw_dir = os.path.join(f"{out_base}_sec_{target_sec}_plots", "raw")
+    raw_dir = os.path.join(f"{out_base}_sec_{target_sec}_plots", "scenario_planning_trajectory")
     os.makedirs(raw_dir, exist_ok=True)
 
     reader = _open_reader(bag_dir, [TOPIC_TRAJ])

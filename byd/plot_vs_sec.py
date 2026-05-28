@@ -2,13 +2,14 @@
 """
 将 velocity_smoother 各阶段轨迹绘制在同一张图中。
 
-横坐标：距终点的路径距离（m），由各点 x 坐标沿轨迹累积计算
+横坐标：默认为距终点的路径距离（m）；加 --use-x 则直接用轨迹点 x 坐标
 纵坐标：longitudinal_velocity_mps
 
 每个子目录对应一条曲线（同一 sec 内多帧取平均或全部绘出，可用 --all-frames）
 
 用法:
   python3 src/byd/plot_vs_sec.py <plots_dir>
+  python3 src/byd/plot_vs_sec.py <plots_dir> --use-x
   python3 src/byd/plot_vs_sec.py <plots_dir> --all-frames
   python3 src/byd/plot_vs_sec.py <plots_dir> --out fig.png
 """
@@ -64,7 +65,7 @@ def x_to_dist_from_end(xs: np.ndarray) -> np.ndarray:
     return dist
 
 
-def plot(plots_dir: str, all_frames: bool, out_path: str) -> None:
+def plot(plots_dir: str, all_frames: bool, use_x: bool, out_path: str) -> None:
     colors = cm.tab10(np.linspace(0, 1, len(SUBDIRS_ORDER)))
 
     fig, ax = plt.subplots(figsize=(12, 6))
@@ -82,21 +83,26 @@ def plot(plots_dir: str, all_frames: bool, out_path: str) -> None:
             continue
 
         if all_frames:
-            # 绘制该 topic 每一帧，透明度区分
             for i, path in enumerate(txts):
                 xs, vels = read_txt(path)
-                dist = x_to_dist_from_end(xs)
+                xdata = xs if use_x else x_to_dist_from_end(xs)
                 alpha = 0.3 + 0.7 * (i / max(len(txts) - 1, 1))
-                ax.plot(dist, vels, color=color, alpha=alpha,
+                ax.plot(xdata, vels, color=color, alpha=alpha,
                         linewidth=1.0,
                         label=label if i == len(txts) - 1 else "_")
         else:
-            # 只绘制最后一帧（最新状态）
             xs, vels = read_txt(txts[-1])
-            dist = x_to_dist_from_end(xs)
-            ax.plot(dist, vels, color=color, linewidth=1.8, label=label)
+            xdata = xs if use_x else x_to_dist_from_end(xs)
+            ax.plot(xdata, vels, color=color, linewidth=1.8, label=label)
 
-    ax.set_xlabel("Distance to endpoint (m)", fontsize=12)
+    if use_x:
+        ax.set_xlabel("x (m)", fontsize=12)
+        xlabel_note = "x coordinate"
+    else:
+        ax.set_xlabel("Distance to endpoint (m)", fontsize=12)
+        ax.invert_xaxis()
+        xlabel_note = "dist to endpoint"
+
     ax.set_ylabel("longitudinal_velocity_mps (m/s)", fontsize=12)
     title = f"Velocity Smoother Pipeline — sec={sec}"
     if all_frames:
@@ -104,14 +110,14 @@ def plot(plots_dir: str, all_frames: bool, out_path: str) -> None:
     ax.set_title(title, fontsize=13)
     ax.legend(loc="upper right", fontsize=9)
     ax.grid(True, linestyle="--", alpha=0.5)
-    ax.invert_xaxis()   # 左边距终点远，右边距终点近（终点在原点）
 
     plt.tight_layout()
     if out_path:
         plt.savefig(out_path, dpi=150)
         print(f"图片已保存: {out_path}")
     else:
-        default = os.path.join(plots_dir, "vs_velocity_profile.png")
+        suffix = "x" if use_x else "dist"
+        default = os.path.join(plots_dir, f"vs_velocity_profile_{suffix}.png")
         plt.savefig(default, dpi=150)
         print(f"图片已保存: {default}")
     plt.show()
@@ -126,11 +132,13 @@ def main():
     ap.add_argument("plots_dir", help="velocity_smoother_sec_XXX_plots 目录")
     ap.add_argument("--all-frames", action="store_true",
                     help="绘制每帧（默认只绘最新一帧）")
+    ap.add_argument("--use-x", action="store_true",
+                    help="横坐标使用轨迹点 x 坐标（默认为距终点距离）")
     ap.add_argument("--out", metavar="FILE", default=None,
-                    help="输出图片路径（默认保存到 plots_dir/vs_velocity_profile.png）")
+                    help="输出图片路径（默认保存到 plots_dir/vs_velocity_profile_*.png）")
     args = ap.parse_args()
 
-    plot(args.plots_dir, args.all_frames, args.out)
+    plot(args.plots_dir, args.all_frames, args.use_x, args.out)
 
 
 if __name__ == "__main__":

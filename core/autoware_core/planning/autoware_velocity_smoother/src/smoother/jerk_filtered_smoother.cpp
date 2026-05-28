@@ -59,6 +59,8 @@ JerkFilteredSmoother::Param JerkFilteredSmoother::getParam() const
   return smoother_param_;
 }
 
+// 对输入轨迹执行 jerk-filter + QP 优化，输出满足速度/加速度/jerk 约束的平滑轨迹。
+// 输入为当前初始速度/加速度与待优化轨迹；输出为优化后的速度和加速度，同时可选输出调试轨迹。
 bool JerkFilteredSmoother::apply(
   const double v0, const double a0, const TrajectoryPoints & input, TrajectoryPoints & output,
   std::vector<TrajectoryPoints> & debug_trajectories, const bool publish_debug_trajs)
@@ -260,11 +262,15 @@ bool JerkFilteredSmoother::apply(
   size_t constr_idx = 0;
 
   // Soft Constraint Velocity Limit: 0 < b - delta < v_max^2
+  // 最低速度限制仅对非停止点生效：停止点 v_max=0，若也设 lower=0.08² 则 lower>upper，QP 不可行。
+  constexpr double v_min_limit = 0.08;  // 非停止点最低速度 [m/s]
   for (size_t i = 0; i < N; ++i, ++constr_idx) {
     A(constr_idx, IDX_B0 + i) = 1.0;       // b_i
     A(constr_idx, IDX_DELTA0 + i) = -1.0;  // -delta_i
     upper_bound[constr_idx] = v_max_arr.at(i) * v_max_arr.at(i);
-    lower_bound[constr_idx] = 0.0;
+    // 仅当 v_max 高于最低限速时才施加下界，停止点保持 lower=0
+    lower_bound[constr_idx] =
+      (v_max_arr.at(i) > v_min_limit) ? v_min_limit * v_min_limit : 0.0;
   }
 
   // Soft Constraint Acceleration Limit: a_min < a - sigma < a_max
@@ -370,6 +376,7 @@ bool JerkFilteredSmoother::apply(
   return true;
 }
 
+// 前向 jerk 滤波：从起点向前递推，限制加速度增长率与速度上限，构造前向可行速度包络。
 TrajectoryPoints JerkFilteredSmoother::forwardJerkFilter(
   const double v0, const double a0, const double a_max, const double a_start, const double j_max,
   const TrajectoryPoints & input) const
@@ -424,6 +431,7 @@ TrajectoryPoints JerkFilteredSmoother::forwardJerkFilter(
   return output;
 }
 
+// 后向 jerk 滤波：通过反转轨迹复用前向滤波逻辑，得到满足减速约束的后向可行速度包络。
 TrajectoryPoints JerkFilteredSmoother::backwardJerkFilter(
   const double v0, const double a0, const double a_min, const double a_stop, const double j_min,
   const TrajectoryPoints & input) const
@@ -441,6 +449,7 @@ TrajectoryPoints JerkFilteredSmoother::backwardJerkFilter(
   return filtered;
 }
 
+// 合并前向/后向滤波结果：起始段保持与初始状态连续，随后逐点取更保守（更小）的速度。
 TrajectoryPoints JerkFilteredSmoother::mergeFilteredTrajectory(
   const double v0, const double a0, const double a_min, const double j_min,
   const TrajectoryPoints & forward_filtered, const TrajectoryPoints & backward_filtered) const
@@ -494,6 +503,7 @@ TrajectoryPoints JerkFilteredSmoother::mergeFilteredTrajectory(
   return merged;
 }
 
+// 将轨迹按 jerk 滤波采样间隔重采样，供后续优化阶段使用。
 TrajectoryPoints JerkFilteredSmoother::resampleTrajectory(
   const TrajectoryPoints & input, [[maybe_unused]] const double v0,
   const geometry_msgs::msg::Pose & current_pose, const double nearest_dist_threshold,

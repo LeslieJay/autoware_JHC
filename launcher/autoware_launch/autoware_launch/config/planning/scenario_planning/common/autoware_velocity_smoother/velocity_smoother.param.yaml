@@ -28,12 +28,12 @@
     engage_acceleration: 1.0           # engage acceleration [m/ss] (use this acceleration when engagement)
     engage_exit_ratio: 0.9             # exit engage sequence to normal velocity planning when the velocity exceeds engage_exit_ratio x engage_velocity.
     # 缩短强制零速区，让 PID 能闭环跟到非常接近 goal 的位置（旧值 1.0 m -> 0.05 m）。
-    stop_dist_to_prohibit_engage: 0.05  # if the stop point is in this distance, the speed is set to 0 not to move the vehicle [m]
+    stop_dist_to_prohibit_engage: 0.0  # if the stop point is in this distance, the speed is set to 0 not to move the vehicle [m]
 
-    # stop velocity —— 低速进场：在距终点 2.5 m 处开始平滑降到 0.5 m/s，使 PID 能跟上。
-    # 旧值 stopping_distance=0.5 变化太陟，车辆冲过了 goal。
+    # stop velocity —— 在距终点 2.5 m 处开始把末端速度线性收敛到 0，避免实车末端重新被 engage 拉成平台。
+    # 这里的 stopping_velocity 表示进入 taper 窗口时允许的最高速度上限。
     stopping_velocity: 1.8  # change target velocity to this value before v=0 point [m/s]
-    stopping_distance: 4.0    # distance for the stopping_velocity [m]. 0 means the stopping velocity is not applied.
+    stopping_distance: 2.5    # distance for the stopping_velocity [m]. 0 means the stopping velocity is not applied.
 
     # path extraction parameters
     extract_ahead_dist: 100.0         # forward trajectory distance used for planning [m]
@@ -54,7 +54,7 @@
     post_min_trajectory_length: 30.0         # min trajectory length for resampling [m]
     post_resample_time: 5.0                 # resample total time for dense sampling [s]
     post_dense_resample_dt: 0.1              # resample time interval for dense sampling [s]
-    post_dense_min_interval_distance: 0.2    # minimum points-interval length for dense sampling [m]
+    post_dense_min_interval_distance: 0.1    # minimum points-interval length for dense sampling [m]
     post_sparse_resample_dt: 0.1             # resample time interval for sparse sampling [s]
     post_sparse_min_interval_distance: 1.0   # minimum points-interval length for sparse sampling [m]
 

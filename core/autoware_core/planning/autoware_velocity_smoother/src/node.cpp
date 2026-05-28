@@ -85,6 +85,9 @@ VelocitySmootherNode::VelocitySmootherNode(const rclcpp::NodeOptions & node_opti
   pub_trajectory_steering_rate_limited_ =
     create_publisher<Trajectory>("~/debug/trajectory_steering_rate_limited", 1);
   pub_trajectory_resampled_ = create_publisher<Trajectory>("~/debug/trajectory_time_resampled", 1);
+  pub_trajectory_clipped_ = create_publisher<Trajectory>("~/debug/trajectory_clipped", 1);
+  pub_trajectory_smoothed_pre_overwrite_ =
+    create_publisher<Trajectory>("~/debug/trajectory_smoothed_pre_overwrite", 1);
 
   external_velocity_limit_.velocity = node_param_.max_velocity;
   max_velocity_with_deceleration_ = node_param_.max_velocity;
@@ -685,6 +688,18 @@ bool VelocitySmootherNode::smoothVelocity(
 
   const size_t traj_resampled_closest = findNearestIndexFromEgo(traj_resampled);
 
+  if (!traj_resampled.empty() && traj_resampled_closest < traj_resampled.size()) {
+    const auto & pt = traj_resampled.at(traj_resampled_closest);
+    const auto & ego_pose = current_odometry_ptr_->pose.pose;
+    RCLCPP_INFO_THROTTLE(
+      get_logger(), *clock_, 1000,
+      "traj_resampled_closest=%zu, traj_pt=(x=%.3f, y=%.3f, z=%.3f, v=%.3f, a=%.3f), "
+      "ego_pose=(x=%.3f, y=%.3f, z=%.3f)",
+      traj_resampled_closest, pt.pose.position.x, pt.pose.position.y, pt.pose.position.z,
+      pt.longitudinal_velocity_mps, pt.acceleration_mps2, ego_pose.position.x,
+      ego_pose.position.y, ego_pose.position.z);
+  }
+
   // Set 0[m/s] in the terminal point
   if (!traj_resampled.empty()) {
     traj_resampled.back().longitudinal_velocity_mps = 0.0;
@@ -698,7 +713,11 @@ bool VelocitySmootherNode::smoothVelocity(
   TrajectoryPoints clipped;
   clipped.insert(
     clipped.end(), traj_resampled.begin() + traj_resampled_closest, traj_resampled.end());
-
+  {
+      auto tmp = clipped;
+      if (is_reverse_) flipVelocity(tmp);
+      pub_trajectory_clipped_->publish(toTrajectoryMsg(tmp));
+  }
   // Set maximum acceleration before applying smoother. Depends on acceleration request from
   // external velocity limit
   const double smoother_max_acceleration =
@@ -732,7 +751,11 @@ bool VelocitySmootherNode::smoothVelocity(
   // Max velocity filter for safety
   trajectory_utils::applyMaximumVelocityLimit(
     traj_resampled_closest, traj_smoothed.size(), node_param_.max_velocity, traj_smoothed);
-
+  {
+      auto tmp = traj_smoothed;
+      if (is_reverse_) flipVelocity(tmp);
+      pub_trajectory_smoothed_pre_overwrite_->publish(toTrajectoryMsg(tmp));
+  }
   // Insert behind velocity for output's consistency
   insertBehindVelocity(traj_resampled_closest, type, traj_smoothed);
 
@@ -848,6 +871,8 @@ std::pair<Motion, VelocitySmootherNode::InitializeType> VelocitySmootherNode::ca
   const double vehicle_speed = std::fabs(current_odometry_ptr_->twist.twist.linear.x);
   const double vehicle_acceleration = current_acceleration_ptr_->accel.accel.linear.x;
   const double target_vel = std::fabs(input_traj.at(input_closest).longitudinal_velocity_mps);
+  const double engage_stop_approach_distance =
+    std::max(node_param_.stop_dist_to_prohibit_engage, node_param_.stopping_distance);
 
   // first time
   if (!current_closest_point_from_prev_output_) {
@@ -877,12 +902,13 @@ std::pair<Motion, VelocitySmootherNode::InitializeType> VelocitySmootherNode::ca
   if (vehicle_speed < engage_vel_thr) {
     if (target_vel >= node_param_.engage_velocity) {
       const double stop_dist = trajectory_utils::calcStopDistance(input_traj, input_closest);
-      if (stop_dist > node_param_.stop_dist_to_prohibit_engage) {
+      if (stop_dist > engage_stop_approach_distance) {
         RCLCPP_DEBUG(
           get_logger(),
           "calcInitialMotion : vehicle speed is low (%.3f), and desired speed is high (%.3f). Use "
-          "engage speed (%.3f) until vehicle speed reaches engage_vel_thr (%.3f). stop_dist = %.3f",
-          vehicle_speed, target_vel, node_param_.engage_velocity, engage_vel_thr, stop_dist);
+          "engage speed (%.3f) until vehicle speed reaches engage_vel_thr (%.3f). stop_dist = %.3f, engage_stop_approach_distance = %.3f",
+          vehicle_speed, target_vel, node_param_.engage_velocity, engage_vel_thr, stop_dist,
+          engage_stop_approach_distance);
         const double engage_acceleration =
           external_velocity_limit_.acceleration_request.request
             ? external_velocity_limit_.acceleration_request.max_acceleration
@@ -891,7 +917,9 @@ std::pair<Motion, VelocitySmootherNode::InitializeType> VelocitySmootherNode::ca
         return {initial_motion, InitializeType::ENGAGING};
       }
       RCLCPP_DEBUG(
-        get_logger(), "calcInitialMotion : stop point is close (%.3f[m]). no engage.", stop_dist);
+        get_logger(),
+        "calcInitialMotion : stop point is inside approach window (%.3f[m] <= %.3f[m]). no engage.",
+        stop_dist, engage_stop_approach_distance);
     } else if (target_vel > 0.0) {
       RCLCPP_WARN_THROTTLE(
         get_logger(), *clock_, 3000,
@@ -1060,14 +1088,20 @@ void VelocitySmootherNode::applyStopApproachingVelocity(TrajectoryPoints & traj)
   if (!stop_idx) {
     return;  // no stop point.
   }
+
+  constexpr double min_taper_distance = 1.0e-3;
+  const double taper_distance = std::max(node_param_.stopping_distance, min_taper_distance);
+  const double taper_velocity = std::max(node_param_.stopping_velocity, 0.0);
   double distance_sum = 0.0;
   for (size_t i = *stop_idx - 1; i < traj.size(); --i) {  // search backward
     distance_sum += autoware_utils::calc_distance2d(traj.at(i), traj.at(i + 1));
-    if (distance_sum > node_param_.stopping_distance) {
+    if (distance_sum > taper_distance) {
       break;
     }
-    if (traj.at(i).longitudinal_velocity_mps > node_param_.stopping_velocity) {
-      traj.at(i).longitudinal_velocity_mps = node_param_.stopping_velocity;
+    const double ratio = distance_sum / taper_distance;
+    const double target_velocity = taper_velocity * ratio;
+    if (traj.at(i).longitudinal_velocity_mps > target_velocity) {
+      traj.at(i).longitudinal_velocity_mps = target_velocity;
     }
   }
 }

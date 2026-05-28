@@ -37,14 +37,14 @@ class LiveObstaclePublisher(Node):
         # uint8 UNDER_DRIVABLE = 11 # Defined as an object that can be safely driven under (e.g., overpass)
 
         class_msg = ObjectClassification()
-        class_msg.label = 1 
+        class_msg.label = 0 
         class_msg.probability = 1.0
         obj.classification.append(class_msg)
 
         # --- 2. 运动学 (Kinematics) ---
 
         ###### 单向-单车道
-        obj.kinematics.pose_with_covariance.pose.position.x = 27.0
+        obj.kinematics.pose_with_covariance.pose.position.x = 27.9
         obj.kinematics.pose_with_covariance.pose.position.y = -100.0
         obj.kinematics.pose_with_covariance.pose.position.z = 1.46
         # obj.kinematics.pose_with_covariance.pose.position.x = 22.5
@@ -79,7 +79,7 @@ class LiveObstaclePublisher(Node):
         except AttributeError:
             obj.shape.type = 1
             
-        obj.shape.dimensions.x = 2.0    
+        obj.shape.dimensions.x = 1.0    
         obj.shape.dimensions.y = 3.0
         obj.shape.dimensions.z = 2.0
 

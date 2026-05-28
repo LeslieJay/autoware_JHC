@@ -1,10 +1,10 @@
 /**:
   ros__parameters:
     jerk_weight: 20.0        # weight for "smoothness" cost for jerk
-    over_v_weight: 100000.0  # weight for "over speed limit" cost
+    over_v_weight: 10.0  # weight for "over speed limit" cost
     over_a_weight: 5000.0    # weight for "over accel limit" cost
     over_j_weight: 2000.0    # weight for "over jerk limit" cost
     jerk_filter_ds: 0.1      # resampling ds for jerk filter
     # 新增：直接惩罚 Σ a[i]^2·ds，抑制 QP 选择"大 |a|"换"贴合 v_max 陡降"
     # 0 = 关闭（保持原行为）；建议 100~1000，越大轨迹越平缓但跟踪 v_max 越松
-    acc_weight: 500.0
+    acc_weight: 0.0

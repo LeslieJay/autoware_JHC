@@ -265,6 +265,8 @@ private:
   rclcpp::Publisher<Trajectory>::SharedPtr pub_trajectory_latacc_filtered_;
   rclcpp::Publisher<Trajectory>::SharedPtr pub_trajectory_steering_rate_limited_;
   rclcpp::Publisher<Trajectory>::SharedPtr pub_trajectory_resampled_;
+  rclcpp::Publisher<Trajectory>::SharedPtr pub_trajectory_clipped_;
+  rclcpp::Publisher<Trajectory>::SharedPtr pub_trajectory_smoothed_pre_overwrite_;
   rclcpp::Publisher<Float32Stamped>::SharedPtr debug_closest_velocity_;
   rclcpp::Publisher<Float32Stamped>::SharedPtr debug_closest_acc_;
   rclcpp::Publisher<Float32Stamped>::SharedPtr debug_closest_jerk_;

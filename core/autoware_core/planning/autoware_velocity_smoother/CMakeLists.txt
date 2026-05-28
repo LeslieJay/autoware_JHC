@@ -58,6 +58,12 @@ if(BUILD_TESTING)
   target_link_libraries(test_${PROJECT_NAME}
     ${PROJECT_NAME}_node
   )
+
+  # 调参工具：固定输入轨迹，对比不同参数配置的速度/加速度输出
+  # 运行方法: ./build/autoware_velocity_smoother/test_jerk_smoother_tuning
+  add_executable(test_jerk_smoother_tuning test/test_jerk_smoother_tuning.cpp)
+  target_link_libraries(test_jerk_smoother_tuning smoother ${rclcpp_LIBRARIES})
+  ament_target_dependencies(test_jerk_smoother_tuning rclcpp autoware_planning_msgs)
 endif()
 
 
