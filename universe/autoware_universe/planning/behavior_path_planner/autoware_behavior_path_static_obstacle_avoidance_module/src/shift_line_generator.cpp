@@ -17,6 +17,9 @@
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 #include "autoware/behavior_path_static_obstacle_avoidance_module/utils.hpp"
 
+#include <magic_enum.hpp>
+#include <rclcpp/logging.hpp>
+
 #include <algorithm>
 #include <string>
 #include <utility>
@@ -35,6 +38,24 @@ bool isBestEffort(const std::string & policy)
 bool perManeuver(const std::string & policy)
 {
   return policy == "per_avoidance_maneuver";
+}
+
+rclcpp::Clock g_avoidance_debug_clock{RCL_ROS_TIME};
+
+const char * toObjectInfoName(const ObjectInfo info)
+{
+  return magic_enum::enum_name(info).data();
+}
+
+void logOutlineSkip(
+  const ObjectData & object, const char * reason, const double desire_shift_length,
+  const double avoidance_distance = -1.0)
+{
+  RCLCPP_WARN_THROTTLE(
+    rclcpp::get_logger(logger_namespace), g_avoidance_debug_clock, 1000,
+    "[AVOIDANCE_OUTLINE] skip id=%s side=%s reason=%s desire_shift=%.2f avoid_dist=%.2f info=%s",
+    to_hex_string(object.object.object_id).c_str(), isOnRight(object) ? "right" : "left", reason,
+    desire_shift_length, avoidance_distance, toObjectInfoName(object.info));
 }
 
 AvoidLine merge(const AvoidLine & line1, const AvoidLine & line2, const UUID id)
@@ -107,6 +128,10 @@ void ShiftLineGenerator::update(AvoidancePlanningData & data, DebugData & debug)
    * STEP3: Create rough shift lines.
    */
   raw_ = applyPreProcess(outlines, data, debug);
+
+  RCLCPP_WARN_THROTTLE(
+    rclcpp::get_logger(logger_namespace), g_avoidance_debug_clock, 1000,
+    "[AVOIDANCE_GENERATOR] update done outlines=%zu raw=%zu", outlines.size(), raw_.size());
 }
 
 AvoidLineArray ShiftLineGenerator::generate(
@@ -145,7 +170,7 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
 
     // nominal case. avoidable.
     if (has_enough_distance) {
-      return std::make_pair(desire_shift_length, avoidance_distance);
+      return std::make_pair(desire_shift_length, avoidance_distance);// (横向偏移距离，纵向避让距离)
     }
 
     if (!isBestEffort(parameters_->policy_lateral_margin)) {
@@ -183,12 +208,17 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
       return std::nullopt;
     }
 
+    if (object.is_avoidable_by_desired_shift_length) {
+      return std::make_pair(desire_shift_length, avoidance_distance);
+    }
+
     // calculate lateral jerk.
     const auto required_jerk = autoware::motion_utils::calc_jerk_from_lat_lon_distance(
       avoiding_shift, avoidance_distance, helper_->getAvoidanceEgoSpeed());
 
     // relax lateral jerk limit. avoidable.
     if (required_jerk < helper_->getLateralMaxJerkLimit()) {
+      object.is_avoidable_by_desired_shift_length = true;
       return std::make_pair(desire_shift_length, avoidance_distance);
     }
 
@@ -271,6 +301,7 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
       } else {
         o.info = ObjectInfo::INSUFFICIENT_DRIVABLE_SPACE;
       }
+      logOutlineSkip(o, "no_avoid_margin", 0.0);
       if (o.avoid_required && is_forward_object(o) && is_on_path(o)) {
         break;
       } else {
@@ -283,6 +314,7 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
       helper_->getShiftLength(o, isOnRight(o), o.avoid_margin.value());
     if (utils::static_obstacle_avoidance::isSameDirectionShift(isOnRight(o), desire_shift_length)) {
       o.info = ObjectInfo::SAME_DIRECTION_SHIFT;
+      logOutlineSkip(o, "same_direction_shift", desire_shift_length);
       if (o.avoid_required && is_forward_object(o) && is_on_path(o)) {
         break;
       } else {
@@ -294,6 +326,9 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
     // calculate feasible shift length based on behavior policy
     const auto feasible_shift_profile = get_shift_profile(o, desire_shift_length);
     if (!feasible_shift_profile.has_value()) {
+      logOutlineSkip(
+        o, "infeasible_shift_profile", desire_shift_length,
+        o.longitudinal > 0.0 ? o.longitudinal : 0.0);
       if (is_approved(o)) {
         // the avoidance path for this object has already approved
         o.is_avoidable = true;
@@ -320,7 +355,7 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
 
     // use absolute dist for return-to-center, relative dist from current for avoiding.
     const auto feasible_return_distance =
-      helper_->getMaxAvoidanceDistance(feasible_shift_profile.value().first);
+      helper_->getMaxReturnDistance(feasible_shift_profile.value().first);
 
     AvoidLine al_avoid;
     {
@@ -350,7 +385,16 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
       al_avoid.start_shift_length = helper_->getLinearShift(al_avoid.start.position);
 
       // end point
-      al_avoid.end_shift_length = feasible_shift_profile.value().first;
+      const auto end_idx = utils::static_obstacle_avoidance::findPathIndexFromArclength(
+        data.arclength_from_ego, to_shift_end);
+      const auto end = data.reference_path.points.at(end_idx).point.pose;
+      if (utils::static_obstacle_avoidance::isOnRight(o)) {
+        al_avoid.end_shift_length =
+          std::max(feasible_shift_profile.value().first, helper_->getLinearShift(end.position));
+      } else {
+        al_avoid.end_shift_length =
+          std::min(feasible_shift_profile.value().first, helper_->getLinearShift(end.position));
+      }
       al_avoid.end_longitudinal = to_shift_end;
 
       // misc
@@ -365,7 +409,7 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
       const auto to_shift_start = o.longitudinal + constant_distance;
 
       // start point
-      al_return.start_shift_length = feasible_shift_profile.value().first;
+      al_return.start_shift_length = al_avoid.end_shift_length;
       al_return.start_longitudinal = to_shift_start;
 
       // end point
@@ -384,7 +428,7 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
       al_return.object = o;
       al_return.object_on_right = utils::static_obstacle_avoidance::isOnRight(o);
     }
-
+    // Skip return shift when goal is nearby: returning to center would conflict with goal pose.
     const bool skip_return_shift = [&]() {
       if (!utils::isAllowedGoalModification(data_->route_handler)) {
         return false;
@@ -406,11 +450,22 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
 
     if (skip_return_shift) {
       // if the object is close to goal or ego is about to return near GOAL, do not return
+      logOutlineSkip(
+        o, "skip_return_shift", feasible_shift_profile.value().first,
+        feasible_shift_profile.value().second);
       outlines.emplace_back(al_avoid, std::nullopt);
     } else if (is_valid_shift_line(al_avoid) && is_valid_shift_line(al_return)) {
+      RCLCPP_WARN_THROTTLE(
+        rclcpp::get_logger(logger_namespace), g_avoidance_debug_clock, 1000,
+        "[AVOIDANCE_OUTLINE] added id=%s side=%s desire_shift=%.2f avoid_dist=%.2f return=1",
+        to_hex_string(o.object.object_id).c_str(), isOnRight(o) ? "right" : "left",
+        feasible_shift_profile.value().first, feasible_shift_profile.value().second);
       outlines.emplace_back(al_avoid, al_return);
     } else if (!is_approved(o)) {
       o.info = ObjectInfo::INVALID_SHIFT_LINE;
+      logOutlineSkip(
+        o, "invalid_shift_line", feasible_shift_profile.value().first,
+        feasible_shift_profile.value().second);
       continue;
     }
 
@@ -421,6 +476,11 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
 
   debug.step1_current_shift_line = toArray(outlines);
 
+  RCLCPP_WARN_THROTTLE(
+    rclcpp::get_logger(logger_namespace), g_avoidance_debug_clock, 1000,
+    "[AVOIDANCE_OUTLINE] done outlines=%zu unavoidable=%zu", outlines.size(),
+    unavoidable_objects.size());
+
   return outlines;
 }
 
@@ -428,6 +488,10 @@ AvoidLineArray ShiftLineGenerator::applyPreProcess(
   const AvoidOutlines & outlines, const AvoidancePlanningData & data, DebugData & debug) const
 {
   AvoidOutlines processed_outlines = outlines;
+
+  RCLCPP_WARN_THROTTLE(
+    rclcpp::get_logger(logger_namespace), g_avoidance_debug_clock, 1000,
+    "[AVOIDANCE_PREPROCESS] in outlines=%zu", outlines.size());
 
   /**
    * Step1: Rough merge process.
@@ -455,6 +519,11 @@ AvoidLineArray ShiftLineGenerator::applyPreProcess(
    */
   processed_raw_lines = applyCombineProcess(processed_raw_lines, raw_registered_, debug);
 
+  RCLCPP_WARN_THROTTLE(
+    rclcpp::get_logger(logger_namespace), g_avoidance_debug_clock, 1000,
+    "[AVOIDANCE_PREPROCESS] after combine raw_lines=%zu registered=%zu", processed_raw_lines.size(),
+    raw_registered_.size());
+
   /*
    * Step5: Add return shift line.
    * Add return-to-center shift point from the last shift point, if needed.
@@ -466,13 +535,23 @@ AvoidLineArray ShiftLineGenerator::applyPreProcess(
    * Step6: Fill gap process.
    * Create and add new shift line to avoid lines.
    */
-  return applyFillGapProcess(processed_raw_lines, data, debug);
+  const auto result = applyFillGapProcess(processed_raw_lines, data, debug);
+
+  RCLCPP_WARN_THROTTLE(
+    rclcpp::get_logger(logger_namespace), g_avoidance_debug_clock, 1000,
+    "[AVOIDANCE_PREPROCESS] out raw_lines=%zu", result.size());
+
+  return result;
 }
 
 AvoidLineArray ShiftLineGenerator::generateCandidateShiftLine(
   const AvoidLineArray & shift_lines, const AvoidancePlanningData & data, DebugData & debug) const
 {
   AvoidLineArray processed_shift_lines = shift_lines;
+
+  RCLCPP_WARN_THROTTLE(
+    rclcpp::get_logger(logger_namespace), g_avoidance_debug_clock, 1000,
+    "[AVOIDANCE_CANDIDATE] in shift_lines=%zu", shift_lines.size());
 
   /**
    * Step1: Merge process.
@@ -486,11 +565,21 @@ AvoidLineArray ShiftLineGenerator::generateCandidateShiftLine(
    */
   processed_shift_lines = applyTrimProcess(processed_shift_lines, debug);
 
+  RCLCPP_WARN_THROTTLE(
+    rclcpp::get_logger(logger_namespace), g_avoidance_debug_clock, 1000,
+    "[AVOIDANCE_CANDIDATE] after trim processed=%zu", processed_shift_lines.size());
+
   /**
    * Step3: Extract new shift lines.
    * Compare processed shift lines and registered shift lines in order to find new shift lines.
    */
-  return findNewShiftLine(processed_shift_lines, debug);
+  const auto new_shift_lines = findNewShiftLine(processed_shift_lines, debug);
+
+  RCLCPP_WARN_THROTTLE(
+    rclcpp::get_logger(logger_namespace), g_avoidance_debug_clock, 1000,
+    "[AVOIDANCE_CANDIDATE] out new_shift_lines=%zu", new_shift_lines.size());
+
+  return new_shift_lines;
 }
 
 void ShiftLineGenerator::generateTotalShiftLine(
@@ -1065,7 +1154,9 @@ AvoidLineArray ShiftLineGenerator::addReturnShiftLine(
                parameters_->object_check_goal_distance;
       });
     if (has_object_near_goal) {
-      RCLCPP_DEBUG(rclcpp::get_logger(""), "object near goal exists so skip adding return shift");
+      RCLCPP_WARN_THROTTLE(
+        rclcpp::get_logger(logger_namespace), g_avoidance_debug_clock, 1000,
+        "[AVOIDANCE_RETURN] skip reason=object_near_goal shift_lines=%zu", ret.size());
       return ret;
     }
   }
@@ -1075,11 +1166,17 @@ AvoidLineArray ShiftLineGenerator::addReturnShiftLine(
     [](const auto & o) { return !o.is_avoidable && o.longitudinal > 0.0; });
 
   if (exist_unavoidable_object) {
+    RCLCPP_WARN_THROTTLE(
+      rclcpp::get_logger(logger_namespace), g_avoidance_debug_clock, 1000,
+      "[AVOIDANCE_RETURN] skip reason=unavoidable_object shift_lines=%zu", ret.size());
     return ret;
   }
 
   if (last_.has_value()) {
     if (std::abs(last_.value().end_shift_length) < RETURN_SHIFT_THRESHOLD) {
+      RCLCPP_DEBUG(
+        rclcpp::get_logger(logger_namespace),
+        "[AVOIDANCE_RETURN] skip reason=last_shift_near_center");
       return ret;
     }
   } else {
@@ -1134,7 +1231,9 @@ AvoidLineArray ShiftLineGenerator::addReturnShiftLine(
                parameters_->object_check_goal_distance;
       });
     if (has_last_shift_near_goal) {
-      RCLCPP_DEBUG(rclcpp::get_logger(""), "last shift line is near the objects");
+      RCLCPP_WARN_THROTTLE(
+        rclcpp::get_logger(logger_namespace), g_avoidance_debug_clock, 1000,
+        "[AVOIDANCE_RETURN] skip reason=last_shift_near_goal shift_lines=%zu", ret.size());
       return ret;
     }
   }
@@ -1176,7 +1275,7 @@ AvoidLineArray ShiftLineGenerator::addReturnShiftLine(
   const auto & arclength_from_ego = data.arclength_from_ego;
 
   const auto nominal_prepare_distance = helper_->getNominalPrepareDistance();
-  const auto nominal_avoid_distance = helper_->getMaxAvoidanceDistance(last_sl.end_shift_length);
+  const auto nominal_avoid_distance = helper_->getMaxReturnDistance(last_sl.end_shift_length);
 
   if (arclength_from_ego.empty()) {
     return ret;
@@ -1193,7 +1292,10 @@ AvoidLineArray ShiftLineGenerator::addReturnShiftLine(
 
   // check if there is enough distance for return.
   if (last_sl_distance > remaining_distance) {  // tmp: add some small number (+1.0)
-    RCLCPP_DEBUG(rclcpp::get_logger(""), "No enough distance for return.");
+    RCLCPP_WARN_THROTTLE(
+      rclcpp::get_logger(logger_namespace), g_avoidance_debug_clock, 1000,
+      "[AVOIDANCE_RETURN] skip reason=no_enough_distance last_sl=%.2f remaining=%.2f",
+      last_sl_distance, remaining_distance);
     return ret;
   }
 
@@ -1262,6 +1364,11 @@ AvoidLineArray ShiftLineGenerator::addReturnShiftLine(
     debug.step1_return_shift_line.push_back(al);
   }
 
+  RCLCPP_WARN_THROTTLE(
+    rclcpp::get_logger(logger_namespace), g_avoidance_debug_clock, 1000,
+    "[AVOIDANCE_RETURN] added return shift total_lines=%zu end_shift=%.2f", ret.size(),
+    last_sl.end_shift_length);
+
   return ret;
 }
 
@@ -1269,6 +1376,9 @@ AvoidLineArray ShiftLineGenerator::findNewShiftLine(
   const AvoidLineArray & shift_lines, DebugData & debug) const
 {
   if (shift_lines.empty()) {
+    RCLCPP_WARN_THROTTLE(
+      rclcpp::get_logger(logger_namespace), g_avoidance_debug_clock, 1000,
+      "[AVOIDANCE_NEW_SL] empty input shift_lines");
     return {};
   }
 
@@ -1332,28 +1442,46 @@ AvoidLineArray ShiftLineGenerator::findNewShiftLine(
     return std::abs(helper_->getRelativeShiftToPath(s)) < parameters_->lateral_execution_threshold;
   };
 
+  // Pick the first shift line that exceeds execution threshold and has enough prepare distance.
   for (size_t i = 0; i < shift_lines.size(); ++i) {
     const auto & candidate = shift_lines.at(i);
 
     // prevent sudden steering.
     if (!helper_->isEnoughPrepareDistance(candidate.start_longitudinal)) {
+      RCLCPP_WARN_THROTTLE(
+        rclcpp::get_logger(logger_namespace), g_avoidance_debug_clock, 1000,
+        "[AVOIDANCE_NEW_SL] stop idx=%zu reason=insufficient_prepare_distance start_lon=%.2f",
+        i, candidate.start_longitudinal);
       break;
     }
 
     if (is_ignore_shift(candidate)) {
+      RCLCPP_DEBUG(
+        rclcpp::get_logger(logger_namespace),
+        "[AVOIDANCE_NEW_SL] ignore idx=%zu reason=below_execution_threshold rel_shift=%.3f", i,
+        helper_->getRelativeShiftToPath(candidate));
       continue;
     }
 
     if (perManeuver(parameters_->policy_approval)) {
       debug.step4_new_shift_line = shift_lines;
+      RCLCPP_WARN_THROTTLE(
+        rclcpp::get_logger(logger_namespace), g_avoidance_debug_clock, 1000,
+        "[AVOIDANCE_NEW_SL] per_maneuver policy returns all %zu lines", shift_lines.size());
       return shift_lines;
     }
 
     const auto new_shift_lines = get_subsequent_shift(i);
     debug.step4_new_shift_line = new_shift_lines;
+    RCLCPP_WARN_THROTTLE(
+      rclcpp::get_logger(logger_namespace), g_avoidance_debug_clock, 1000,
+      "[AVOIDANCE_NEW_SL] selected idx=%zu count=%zu", i, new_shift_lines.size());
     return new_shift_lines;
   }
 
+  RCLCPP_WARN_THROTTLE(
+    rclcpp::get_logger(logger_namespace), g_avoidance_debug_clock, 1000,
+    "[AVOIDANCE_NEW_SL] no usable shift line from %zu candidates", shift_lines.size());
   return {};
 }
 
