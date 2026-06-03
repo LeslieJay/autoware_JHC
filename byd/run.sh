@@ -59,7 +59,7 @@ open_terminal_tabs() {
 		exit 1
 	fi
 
-	gnome-terminal --window --title="1_usb_can" -- \
+	gnome-terminal --tab --title="1_usb_can" -- \
 		bash -ic "cd \"$USB_CAN_WS\" && source install/setup.bash && ros2 run usb_can_driver can_usb_node; exec bash"
 	gnome-terminal --tab --title="2_rtk_can" -- \
 		bash -ic "cd \"$RTK_CAN_WS\" && source install/setup.bash && ros2 run rtk_can_driver can_rtk_node; exec bash"
